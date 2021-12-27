@@ -1,0 +1,240 @@
+                  Syntaxer Definition File Specification
+                             26 December 2021
+
+The Embed syntaxer parses a collection of text lines according to a
+user-defined syntax.  A syntax tree is built from the input lines.  An
+application can traverse this syntax tree to implement whatever semantics
+are defined by the input stream.  This document describes the content of a
+syntax definition file.  Such a file describes the application-specific
+syntax to parse.
+
+
+Commands
+
+  The syntax definition is organized as lines of text that are syntaxer
+  commands.  These commands start in column 1 with a dot, followed
+  immediately by the command name.  Command names and keywords are
+  case-insensitive.  The commands are:
+
+  .SYMBOL name[routine] external
+
+    This command declares NAME as the name of a syntax construction that
+    can be used in the remainder of the file.  NAME is case-insensitive.
+    The syntax construction is not defined here, only its existence and
+    subroutine details are declared.
+
+    The name must be at least one character long, and must start with a
+    letter.  Subsequent name characters, if any, may be a letter, a digit,
+    the underscore (_), or the dollar sign ($).
+
+    The "[routine]" part is optional.  If provided, the subroutine created
+    internally for parsing the construction will be given the name
+    specified by ROUTINE.  Otherwise, the name is generated automatically
+    by the syntaxer, with the exact name chosen not guaranteed.  The
+    ROUTINE parameter makes the routine name known.  This is necessary,
+    for example, for the application to call the syntax construction
+    parsing routine directly.
+
+    "EXTERNAL" is optional, and specifies that the application will supply
+    the routine itself.  The syntaxer will not create the construction
+    parsing routine.  In that case, it is an error to define the syntax
+    construction later.  The routine name must be specified when the
+    EXTERNAL option is used.
+
+  .DEFINE name .AS expression
+
+    Defines the syntax construction NAME.  NAME must have been previously
+    declared with a .SYMBOL command.  EXPRESSION is a sequence of syntax
+    constructions specifying what is expected in the input stream.
+
+  A command ends when another command is found, or the end of the input
+  stream is encountered.
+
+
+Syntax expressions
+
+  Syntax expressions are a sequence of one or more syntax items.  The
+  input stream matches the expression if it matches all the items in the
+  expression, in order.  Syntax items in a syntax expression are separated
+  from each other by one or more spaces and/or new lines.
+
+  Each syntax item must be one of:
+
+    "string"
+    'string'
+
+      Literal string, enclosed in either quotes or apostrophies.  The
+      input stream must exactly match STRING.
+
+    name
+
+      User-defined syntax construction.  NAME must have been previously
+      declared with a .SYMBOL command.  A new subordinate level is created
+      on the syntax tree for this construction.
+
+    .name
+
+      A pre-defined syntax construction built into the syntaxer.  The
+      built-in constructions are listed in a separate section, below.
+
+    (expression)
+
+      An expression can be converted to a single item by enclosing it in
+      parenthesis.
+
+  Each item may be "tagged".  The syntax for a tagged item is:
+
+    item[n]
+
+  The item must be immediately followed by (no spaces) an open bracket, a
+  decimal integer of 1 or higher, and a close bracket.  Tagging an item
+  causes a reference to it to be saved on the syntax tree.  Only tagged
+  items are seen when the application traverses the syntax tree.
+  Applications can get the original text corresponding to the item and get
+  the value of N used to tag the item.
+
+
+Built-in syntax constructions
+
+  The predefined syntax constructions built into the syntaxer are:
+
+    .RANGE[char1 THRU char2]
+
+      Specifies a single input stream character.  The character must have
+      a character code greater than or equal to that of CHAR1, and less
+      than or equal to that of CHAR2.
+
+      CHAR1 and CHAR2 are single characters enclosed in quotes ("x") or
+      apostrophies ('x').
+
+    .OCCURS[n TO m] item
+
+      ITEM may occur N to M times in succession.  N must be an integer 0
+      or greater, represented by a string of decimal digits.  M can be the
+      same thing or the special keyword INF.  INF means there is no upper
+      limit on how many times the item may be repeated.
+
+    .OPTIONAL item
+
+      ITEM may optionally occur.  This is a short form for:
+
+        .OCCURS[0 TO 1] item
+
+    .UPTO item
+
+      The input stream is matched up to but not including ITEM.  ITEM must
+      be in the input stream, but is not consumed.  The input stream
+      parsing position will be left at the start of ITEM.
+
+    .NOT item
+
+      The input stream must not match ITEM.
+
+    item .OR expression
+
+      The input stream must match ITEM, or everything following .OR.
+
+    .NULL
+
+      This construction always matches, but does not consume any input
+      stream characters.
+
+    .CHARCASE [UPPER | LOWER | OFF]
+
+      Set the character case interpretation for the remainder of the
+      expression.  One of UPPER, LOWER, or OFF must appear within the
+      brackets.  Their meanings are:
+
+      UPPER
+
+        Input stream characters are interpreted as if they were upper case.
+
+      LOWER
+
+        Input stream characters are interpreted as if they were lower case.
+
+      OFF
+
+        Input stream characters are interpreted as-is.
+
+    .EOL
+
+      End of line.
+
+    .EOF
+
+      End of file.  This is different from the end of data if in a nested
+      file.
+
+    .EOD
+
+      End of data.  There is no more input after this.
+
+
+Tagged items
+
+  The syntaxer builds a syntax tree as it processes the input stream.  A
+  subordinate level is created for each user-defined construction as it is
+  encountered.  The application then "reads" the input stream by
+  traversing the syntax tree.
+
+  When a syntax tree is built without error, it is garanteed that the
+  input stream matched the syntax specification.
+
+  The syntax tree does not include any of the input stream content by
+  default.  Input stream data is only included in the syntax tree when it
+  is explicitly "tagged".  How to tag syntax items is described at the
+  bottom of the "Syntax expressions" section, above.
+
+  In effect, the services provided by the syntaxer are:
+
+    - Validate the input stream as adhering to the syntax specification.
+
+    - Discard the syntax details that are no longer relevant once the
+      input stream is verified.
+
+    - Identify and pass on only the parts of the validated input stream
+      that must be acted upon.
+
+  The last point is what tagged items are.  Only syntax items that are
+  specifically tagged will be available on the syntax tree.  Tagged items
+  on the syntax tree refer to the section of the input stream that was
+  tagged, and also an ID specified in the syntax definition.  The IDs are
+  useful to the application for distinguishing between options that might
+  have occurred at that point in the input stream.
+
+  For example, consider a language where assignment statements can take
+  either of two forms:
+
+    variable <-- expression
+    expression --> variable
+
+  The syntax definition of an assignment statement could be:
+
+    .define assignment .as
+      pad
+      ( (variable[1] pad "<--" pad expression[2]) .or
+        (expression[2] pad "-->" pad variable[1]))
+      pad .eol
+
+  In this example PAD matches 0 or more spaces, and VARIABLE and
+  EXPRESSION define the syntaxes for variables and expressions,
+  respectively.
+
+  The application traversing the syntax tree will only see two tagged
+  items, a variable with ID 1, and the expression to assign to the
+  variable with ID 2.  It does not need to know which of the two forms
+  were used to specify the assignment.  Since the tree was built without
+  error, the application is assured that one of the two forms was followed
+  correctly.  This includes spaces allowed in some places, nothing more on
+  the line, and that the approriate "<--" or "-->" was used.  Those are
+  syntax details that were checked, but are no longer relevant.
+
+  In this case, the only artifact resulting from the two forms is the
+  order in which the variable and the expression occur on the syntax tree.
+  The application must use the ID of each tagged item to determine which
+  it is.
+
+  Each tagged item in this example refers to a whole subordinate syntax
+  tree level.  This is because each item is a named user-defined syntax
+  construction.
