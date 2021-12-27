@@ -43,7 +43,7 @@ type
   syn_charcase_k_t = (                 {how to handle input stream character case}
     syn_charcase_down_k,               {convert input to lower case}
     syn_charcase_up_k,                 {convert input to upper case}
-    syn_charcase_asis_k);              {do not alter input stream characters}
+    syn_charcase_asis_k);              {do not alter input stream characters (default)}
 
   syn_ttype_k_t = (                    {the different syntax tree entry types}
     syn_ttype_sub_k,                   {starting subordinate level}
@@ -71,12 +71,13 @@ syn_ttype_err_k: (                     {error end of syntax tree}
 
   syn_fparse_p_t = ^syn_fparse_t;
   syn_fparse_t = record                {temp state stack frame during parsing}
+    level: sys_int_machine_t;          {nesting level, 0 at top}
+    prev_p: syn_fparse_p_t;            {to previous stack frame, NIL at first}
     frame_lev_p: syn_fparse_p_t;       {to frame of last level start}
     frame_save_p: syn_fparse_p_t;      {to frame of last explict save}
-    name_p: string_var_p_t;            {to name of this level, if any}
-    tent_p: syn_tent_p_t;              {to last tree entry when this frame created}
+    name_p: string_var_p_t;            {to name if this is start of new level}
+    tent_p: syn_tent_p_t;              {to current last syntax tree entry}
     pos: fline_cpos_t;                 {live input stream position}
-    case_save: syn_charcase_k_t;       {saved char case mode when frame created}
     case: syn_charcase_k_t;            {live char case mode}
     end;
 
@@ -102,7 +103,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     pos_start: fline_cpos_t;           {starting position of current parse}
     pos_err: fline_cpos_t;             {farthest parsing position reached}
     err: boolean;                      {doing error re-parse}
-    parse_p: syn_fparse_p_t;           {to current parsing state stack frame}
+    parse_p: syn_fparse_p_t;           {to current parsing state, on stack}
     parsefunc_p: univ_ptr;             {pointer to top level syntax to parse}
     {
     *   State used when traversing the syntax tree.
