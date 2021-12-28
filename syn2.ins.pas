@@ -76,7 +76,12 @@ procedure syn_tree_del (               {delete syntax tree, if exists}
 
 procedure syn_tree_del_after (         {delete all past specific tree entry}
   in out  syn: syn_t;                  {SYN library use state}
-  in out  ent_p: syn_tent_p_t);        {last entry to keep, delete all after}
+  in      ent_p: syn_tent_p_t);        {last entry to keep, delete all after}
+  val_param; extern;
+
+procedure syn_tree_ent_add (           {make new syntax tree entry after curr}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     ent_p: syn_tent_p_t);        {returned pointer to the new entry}
   val_param; extern;
 
 procedure syn_tree_init (              {init syntax tree, empty, ready for use}

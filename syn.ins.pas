@@ -52,6 +52,7 @@ type
 
   syn_tent_p_t = ^syn_tent_t;
   syn_tent_t = record                  {one syntax tree entry}
+    back_p: syn_tent_p_t;              {pointer to previously-created entry}
     next_p: syn_tent_p_t;              {to next entry this level, NIL at end of level}
     ttype: syn_ttype_k_t;              {what kind of entry this is}
     case syn_ttype_k_t of
@@ -76,7 +77,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     frame_lev_p: syn_fparse_p_t;       {to frame of last level start}
     frame_save_p: syn_fparse_p_t;      {to frame of last explict save}
     name_p: string_var_p_t;            {to name if this is start of new level}
-    tent_p: syn_tent_p_t;              {to current last syntax tree entry}
+    tent_p: syn_tent_p_t;              {to current syntax tree entry}
     pos: fline_cpos_t;                 {live input stream position}
     case: syn_charcase_k_t;            {live char case mode}
     end;
@@ -91,6 +92,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     mem_p: util_mem_context_p_t;       {pointer to private memory context}
     mem_tree_p: util_mem_context_p_t;  {points to private mem for syntax tree}
     sytree_p: syn_tent_p_t;            {points to first syntax tree entry}
+    sytree_last_p: syn_tent_p_t;       {points to last-created syntax tree entry}
     coll_p: fline_coll_p_t;            {points to collection of input lines}
     nametab: string_hash_handle_t;     {table of syntax construction names}
     names: boolean;                    {NAMETAB has been created}
