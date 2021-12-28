@@ -3,6 +3,7 @@
 module syn_tree;
 define syn_tree_init;
 define syn_tree_del;
+define syn_tree_del_after;
 %include 'syn2.ins.pas';
 {
 ********************************************************************************
@@ -41,4 +42,18 @@ begin
 
   syn.sytree_p := nil;                 {there is no syntax tree entry}
   syn.tent_unused_p := nil;            {there is no chain of unused entries}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_TREE_DEL_AFTER (SYN, ENT_P)
+*
+*   Delete the entry at ENT_P from the syntax tree, and all following entries.
+}
+procedure syn_tree_del_after (         {delete all past specific tree entry}
+  in out  syn: syn_t;                  {SYN library use state}
+  in out  ent_p: syn_tent_p_t);        {last entry to keep, delete all after}
+  val_param;
+
+begin
   end;
