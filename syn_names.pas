@@ -6,6 +6,7 @@
 module syn_names;
 define syn_names_init;
 define syn_names_del;
+define syn_names_get;
 %include 'syn2.ins.pas';
 {
 ********************************************************************************
@@ -48,4 +49,41 @@ begin
 
   string_hash_delete (syn.nametab);    {delete syntax names symbol table}
   syn.names := false;                  {indicate names table doesn't exist}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_NAMES_GET (SYN, NAME, NAME_P)
+*
+*   Set NAME_P pointing to the name NAME string in the names table.  An entry
+*   for NAME is created if it does not already exist.
+}
+procedure syn_names_get (              {make or find symbol table entry for a name}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      name: string_var_arg_t;      {name to look up}
+  out     name_p: string_var_p_t);     {returned pointing to name string in sym table}
+  val_param;
+
+var
+  pos: string_hash_pos_t;              {position within table}
+  data_p: univ_ptr;                    {pointer to symbol data in names table}
+  found: boolean;                      {name was found in symbol table}
+
+begin
+  string_hash_pos_lookup (             {get position for this name}
+    syn.nametab,                       {handle to the symbol table}
+    name,                              {symbol name to get position of}
+    pos,                               {returned position for this name}
+    found);                            {name was found}
+
+  if found
+    then begin                         {the name already exists in the table}
+      string_hash_ent_atpos (          {get pointers to the existing entry}
+        pos, name_p, data_p);
+      end
+    else begin                         {this name is not already in the table}
+      string_hash_ent_add (            {create new entry, get pointers to it}
+        pos, name_p, data_p);
+      end
+    ;
   end;
