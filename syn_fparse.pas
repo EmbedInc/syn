@@ -32,7 +32,7 @@ begin
   fr_p^.prev_p := nil;                 {no previous stack frame}
   fr_p^.frame_lev_p := nil;            {no previous level start}
   fr_p^.frame_save_p := nil;           {no previous saved state}
-  fr_p^.name_p := nil;                 {the root doesn't have a name}
+  fr_p^.frame_tag_p := nil;            {not in a tag}
   fr_p^.tent_p := nil;                 {init to no curr syntax tree entry}
   fr_p^.pos := syn.pos_start;          {init input stream reading position}
   fr_p^.case := syn_charcase_asis_k;   {init to default char case interpretation}
@@ -42,17 +42,15 @@ begin
 {
 ********************************************************************************
 *
-*   Subroutine SYN_FPARSE_LEVEL (SYN, NAME)
+*   Subroutine SYN_FPARSE_LEVEL (SYN)
 *
-*   Push a frame on the stack for the start of a new syntax level.  NAME is the
-*   name of the syntax construction this new level is for.
+*   Push a frame on the stack for the start of a new syntax level.
 *
 *   The new stack frame will be created, initialized, and made the current
-*   frame.  NAME will be added to the names symbol table, if not already there.
+*   frame.
 }
 procedure syn_fparse_level (           {create stack frame for new syntax level}
-  in out  syn: syn_t;                  {SYN library use state}
-  in      name: string_var_arg_t);     {name of the new syntax level}
+  in out  syn: syn_t);                 {SYN library use state}
   val_param;
 
 var
@@ -65,7 +63,7 @@ begin
   fr_p^.prev_p := syn.parse_p;         {point back to previous stack frame}
   fr_p^.frame_lev_p := fr_p;           {this frame will be start of current level}
   fr_p^.frame_save_p := syn.parse_p^.frame_save_p; {pointer to last explicit save}
-  syn_names_get (syn, name, fr_p^.name_p); {pointer to name saved in names table}
+  fr_p^.frame_tag_p := syn.parse_p^.frame_tag_p; {pointer to tag start, if any}
   fr_p^.tent_p := syn.parse_p^.tent_p; {init pointer to curr syntax tree entry}
   fr_p^.pos := syn.parse_p^.pos;       {init input stream parsing position}
   fr_p^.case := syn.parse_p^.case;     {init current char case interpretation}
@@ -94,7 +92,7 @@ begin
   fr_p^.prev_p := syn.parse_p;         {point back to previous stack frame}
   fr_p^.frame_lev_p := syn.parse_p^.frame_lev_p; {to start of current level}
   fr_p^.frame_save_p := fr_p;          {this frame is now last explicit save}
-  fr_p^.name_p := nil;                 {this save doesn't have a name}
+  fr_p^.frame_tag_p := syn.parse_p^.frame_tag_p; {pointer to tag start, if any}
   fr_p^.tent_p := syn.parse_p^.tent_p; {init pointer to last syntax tree entry}
   fr_p^.pos := syn.parse_p^.pos;       {init input stream parsing position}
   fr_p^.case := syn.parse_p^.case;     {init current char case interpretation}

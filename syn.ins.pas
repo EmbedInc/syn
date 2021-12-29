@@ -82,7 +82,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     prev_p: syn_fparse_p_t;            {to previous stack frame, NIL at first}
     frame_lev_p: syn_fparse_p_t;       {to frame of last level start}
     frame_save_p: syn_fparse_p_t;      {to frame of last explict save}
-    name_p: string_var_p_t;            {to name if this is start of new level}
+    frame_tag_p: syn_fparse_p_t;       {to frame of current tag start, if any}
     tent_p: syn_tent_p_t;              {to current syntax tree entry}
     pos: fline_cpos_t;                 {live input stream position}
     case: syn_charcase_k_t;            {live char case mode}

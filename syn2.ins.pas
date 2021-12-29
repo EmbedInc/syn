@@ -14,8 +14,7 @@ procedure syn_fparse_init (            {init stack for parsing, delete previous 
   val_param; extern;
 
 procedure syn_fparse_level (           {create stack frame for new syntax level}
-  in out  syn: syn_t;                  {SYN library use state}
-  in      name: string_var_arg_t);     {name of the new syntax level}
+  in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;
 
 procedure syn_fparse_level_pop (       {pop curr syntax level from stack}
