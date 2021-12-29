@@ -36,10 +36,11 @@ begin
   syn.pos_start.ind := 0;              {init position to before first char}
   syn.parsefunc_p := syfunc_p;         {save pointer to top level syntax to parse}
 
-  syn_stack_init (syn);                {init temp data stack, ready for use}
+  syn_fparse_init (syn);               {init temp state stack for parsing}
   syn_tree_init (syn);                 {init syntax tree, empty, ready to add to}
   syn_names_init (syn);                {init syntax names symbol table to empty}
 
+  syn.parse_p^.tent_p := syn.sytree_p; {init curr tree entry to the root entry}
   syn.pos_err := syn.pos_start;        {init farthest character parsed to}
   syn.err := false;                    {doing normal parse, not error re-parse}
 

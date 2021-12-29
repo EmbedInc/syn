@@ -70,20 +70,30 @@ procedure syn_stack_push (             {push new frame onto the stack}
   out     frame_p: univ_ptr);          {returned pointer to the new frame}
   val_param; extern;
 
+procedure syn_tree_add_sub (           {add subordinate level to syntax tree}
+  in out  syn: syn_t;                  {SYN library use state}
+  in out  par: syn_tent_t;             {parent syntax tree entry}
+  in      name_p: string_var_p_t;      {pointer to name of new level, if any}
+  out     lev_p: syn_tent_p_t);        {returned pointer to start of new level}
+  val_param; extern;
+
+procedure syn_tree_add_tag (           {add syntax tree entry for tagged item}
+  in out  syn: syn_t;                  {SYN library use state}
+  in out  par: syn_tent_t;             {parent syntax tree entry}
+  in      id: sys_int_machine_t;       {tag ID}
+  in      cpos: fline_cpos_t;          {tagged string start position}
+  out     tag_p: syn_tent_p_t);        {returned pointer to new syntax tree entry}
+  val_param; extern;
+
 procedure syn_tree_del (               {delete syntax tree, if exists}
   in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;
 
-procedure syn_tree_del_after (         {delete all past specific tree entry}
-  in out  syn: syn_t;                  {SYN library use state}
-  in      ent_p: syn_tent_p_t);        {last entry to keep, delete all after}
-  val_param; extern;
-
-procedure syn_tree_ent_add (           {make new syntax tree entry after curr}
-  in out  syn: syn_t;                  {SYN library use state}
-  out     ent_p: syn_tent_p_t);        {returned pointer to the new entry}
-  val_param; extern;
-
 procedure syn_tree_init (              {init syntax tree, empty, ready for use}
   in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_tree_trunc (             {truncate tree past specific entry}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      ent_p: syn_tent_p_t);        {last entry to keep, delete all after}
   val_param; extern;

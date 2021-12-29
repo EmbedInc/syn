@@ -5,7 +5,7 @@
 *   To use the syntaxer, the syntax definition file is compiled to executable
 *   code in a linkable library.  This is done by the SST program, taking the
 *   syntax definition file (.syn) as input.  The application that interprets the
-*   syntax is then linked with the resulting library.  The application calls
+*   syntax is then linked with the resulting binary.  The application calls
 *   routines in the SYN library to cause the input text to be parsed and a
 *   syntax tree built.  The app then calls other SYN library routines to
 *   traverse the syntax tree.
@@ -46,7 +46,8 @@ type
     syn_charcase_asis_k);              {do not alter input stream characters (default)}
 
   syn_ttype_k_t = (                    {the different syntax tree entry types}
-    syn_ttype_sub_k,                   {starting subordinate level}
+    syn_ttype_lev_k,                   {start of a syntax level}
+    syn_ttype_sub_k,                   {link to subordinate level}
     syn_ttype_tag_k,                   {tagged item}
     syn_ttype_err_k);                  {error end of tree}
 
@@ -54,11 +55,16 @@ type
   syn_tent_t = record                  {one syntax tree entry}
     back_p: syn_tent_p_t;              {pointer to previously-created entry}
     next_p: syn_tent_p_t;              {to next entry this level, NIL at end of level}
+    levst_p: syn_tent_p_t;             {points to starting entry for this level}
     ttype: syn_ttype_k_t;              {what kind of entry this is}
     case syn_ttype_k_t of
-syn_ttype_sub_k: (                     {subordinate level}
-      sub_p: syn_tent_p_t;             {points to first entry in subordinate level}
-      name_p: string_var_p_t;          {points to name of construction for sub level}
+syn_ttype_lev_k: (                     {start of a syntax level}
+      level: sys_int_machine_t;        {nesting level, 0 at root}
+      lev_up_p: syn_tent_p_t;          {points to link to this level in parent level}
+      lev_name_p: string_var_p_t;      {points to name of this level}
+      );
+syn_ttype_sub_k: (                     {link to subordinate level}
+      sub_p: syn_tent_p_t;             {points to start of subordinate level}
       );
 syn_ttype_tag_k: (                     {tagged item}
       tag: sys_int_machine_t;          {tag ID}

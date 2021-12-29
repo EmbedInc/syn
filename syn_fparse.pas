@@ -134,7 +134,7 @@ begin
         end;
       end
     else begin                         {completely restore to the old state}
-      syn_tree_del_after (syn, old_p^.tent_p); {restore original syntax tree}
+      syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
       end
     ;
 
