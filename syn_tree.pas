@@ -198,7 +198,7 @@ begin
   tag_p^.ttype := syn_ttype_tag_k;     {this entry is for tagged input string}
   tag_p^.tag := id;                    {save tag ID}
   tag_p^.tag_st := cpos;               {set starting input stream position}
-  tag_p^.tag_en := cpos;               {init ending input stream position}
+  tag_p^.tag_af := cpos;               {init ending input stream position}
   end;
 {
 ********************************************************************************

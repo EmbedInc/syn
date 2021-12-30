@@ -69,7 +69,7 @@ syn_ttype_sub_k: (                     {link to subordinate level}
 syn_ttype_tag_k: (                     {tagged item}
       tag: sys_int_machine_t;          {tag ID}
       tag_st: fline_cpos_t;            {starting char pos of tagged string}
-      tag_en: fline_cpos_t;            {ending char pos of tagged string}
+      tag_af: fline_cpos_t;            {first char pos after tagged string}
       );
 syn_ttype_err_k: (                     {error end of syntax tree}
       err_pos: fline_cpos_t;           {pos of first char not matching the syntax}
@@ -86,6 +86,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     tent_p: syn_tent_p_t;              {to current syntax tree entry}
     pos: fline_cpos_t;                 {live input stream position}
     case: syn_charcase_k_t;            {live char case mode}
+    tagged: boolean;                   {tag created since level start or last save}
     end;
 
   syn_ftrav_p_t = ^syn_ftrav_t;
@@ -111,6 +112,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     pos_start: fline_cpos_t;           {starting position of current parse}
     pos_err: fline_cpos_t;             {farthest parsing position reached}
     err: boolean;                      {doing error re-parse}
+    err_end: boolean;                  {err char has been reached in error reparse}
     parse_p: syn_fparse_p_t;           {to current parsing state, on stack}
     parsefunc_p: univ_ptr;             {pointer to top level syntax to parse}
     {
@@ -282,12 +284,12 @@ function syn_p_ichar (                 {get next input char code, charcase appli
 
 procedure syn_p_tag_end (              {end tagged section of input stream}
   in out  syn: syn_t;                  {SYN library use state}
-  in      match: boolean;              {input matched, create the tag}
-  in      id: sys_int_machine_t);      {ID of this tag, must be > 0}
+  in      match: boolean);             {input matched, create the tag}
   val_param; extern;
 
 procedure syn_p_tag_start (            {start tagged section of input stream}
-  in out  syn: syn_t);                 {SYN library use state}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      id: sys_int_machine_t);      {tag ID}
   val_param; extern;
 
 function syn_p_test_eod (              {check for at end of input data}

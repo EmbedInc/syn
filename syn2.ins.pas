@@ -14,7 +14,8 @@ procedure syn_fparse_init (            {init stack for parsing, delete previous 
   val_param; extern;
 
 procedure syn_fparse_level (           {create stack frame for new syntax level}
-  in out  syn: syn_t);                 {SYN library use state}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      tlev_p: syn_tent_p_t);       {to tree entry starting the new level}
   val_param; extern;
 
 procedure syn_fparse_level_pop (       {pop curr syntax level from stack}
@@ -31,6 +32,16 @@ procedure syn_fparse_save_pop (        {pop back to before last saved state}
   in      match: boolean);             {TRUE save/update state, FALSE restore state}
   val_param; extern;
 
+procedure syn_fparse_tag (             {create stack frame for start of tagged input}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      ttag_p: syn_tent_p_t);       {to syntax tree entry for this tag}
+  val_param; extern;
+
+procedure syn_fparse_tag_pop (         {pop tag from the stack}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      match: boolean);             {TRUE save/update state, FALSE restore state}
+  val_param; extern;
+
 procedure syn_names_del (              {delete syntax names table, if exists}
   in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;
@@ -41,7 +52,7 @@ procedure syn_names_init (             {init syntax names symbol table to empty}
 
 procedure syn_names_get (              {make or find symbol table entry for a name}
   in out  syn: syn_t;                  {SYN library use state}
-  in      name: string_var_arg_t;      {name to look up}
+  in      name: univ string_var_arg_t; {name to look up}
   out     name_p: string_var_p_t);     {returned pointing to name string in sym table}
   val_param; extern;
 

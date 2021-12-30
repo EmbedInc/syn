@@ -4,8 +4,10 @@ module syn_fparse;
 define fparse_init;
 define fparse_level;
 define fparse_save;
+define fparse_tag;
 define fparse_level_pop;
 define fparse_save_pop;
+define fparse_tag_pop;
 %include 'syn2.ins.pas';
 {
 ********************************************************************************
@@ -36,21 +38,24 @@ begin
   fr_p^.tent_p := nil;                 {init to no curr syntax tree entry}
   fr_p^.pos := syn.pos_start;          {init input stream reading position}
   fr_p^.case := syn_charcase_asis_k;   {init to default char case interpretation}
+  fr_p^.tagged := false;               {nothing tagged yet}
 
   syn.parse_p := fr_p;                 {set this frame as the current state}
   end;
 {
 ********************************************************************************
 *
-*   Subroutine SYN_FPARSE_LEVEL (SYN)
+*   Subroutine SYN_FPARSE_LEVEL (SYN, TLEV_P)
 *
-*   Push a frame on the stack for the start of a new syntax level.
+*   Push a frame on the stack for the start of a new syntax level.  TLEV_P
+*   points to the syntax tree entry for the start of the new level.
 *
 *   The new stack frame will be created, initialized, and made the current
 *   frame.
 }
 procedure syn_fparse_level (           {create stack frame for new syntax level}
-  in out  syn: syn_t);                 {SYN library use state}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      tlev_p: syn_tent_p_t);       {to tree entry starting the new level}
   val_param;
 
 var
@@ -64,9 +69,10 @@ begin
   fr_p^.frame_lev_p := fr_p;           {this frame will be start of current level}
   fr_p^.frame_save_p := syn.parse_p^.frame_save_p; {pointer to last explicit save}
   fr_p^.frame_tag_p := syn.parse_p^.frame_tag_p; {pointer to tag start, if any}
-  fr_p^.tent_p := syn.parse_p^.tent_p; {init pointer to curr syntax tree entry}
+  fr_p^.tent_p := tlev_p;              {point to syn tree entry starting this level}
   fr_p^.pos := syn.parse_p^.pos;       {init input stream parsing position}
   fr_p^.case := syn.parse_p^.case;     {init current char case interpretation}
+  fr_p^.tagged := false;               {nothing tagged yet this level}
 
   syn.parse_p := fr_p;                 {the current state is now in this new frame}
   end;
@@ -93,9 +99,41 @@ begin
   fr_p^.frame_lev_p := syn.parse_p^.frame_lev_p; {to start of current level}
   fr_p^.frame_save_p := fr_p;          {this frame is now last explicit save}
   fr_p^.frame_tag_p := syn.parse_p^.frame_tag_p; {pointer to tag start, if any}
-  fr_p^.tent_p := syn.parse_p^.tent_p; {init pointer to last syntax tree entry}
+  fr_p^.tent_p := syn.parse_p^.tent_p; {init pointer to current syntax tree entry}
   fr_p^.pos := syn.parse_p^.pos;       {init input stream parsing position}
   fr_p^.case := syn.parse_p^.case;     {init current char case interpretation}
+  fr_p^.tagged := false;               {nothing tagged yet since this save}
+
+  syn.parse_p := fr_p;                 {the current state is now in this new frame}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_FPARSE_TAG (SYN, TTAG_P)
+*
+*   Create a new temporary state stack frame for the start of a tag.  TTAG_P
+*   must point to the syntax tree entry for the start of the tag.
+}
+procedure syn_fparse_tag (             {create stack frame for start of tagged input}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      ttag_p: syn_tent_p_t);       {to syntax tree entry for this tag}
+  val_param;
+
+var
+  fr_p: syn_fparse_p_t;                {pointer to the new stack frame}
+
+begin
+  syn_stack_push (syn, sizeof(fr_p^), fr_p); {create the new stack frame}
+
+  fr_p^.level := syn.parse_p^.level;   {staying within same nesting level}
+  fr_p^.prev_p := syn.parse_p;         {point back to previous stack frame}
+  fr_p^.frame_lev_p := syn.parse_p^.frame_lev_p; {to start of current level}
+  fr_p^.frame_save_p := syn.parse_p^.frame_save_p; {to last explicit save}
+  fr_p^.frame_tag_p := fr_p;           {this frame is the last tag start}
+  fr_p^.tent_p := ttag_p;              {pointer to the tag start syntax tree entry}
+  fr_p^.pos := syn.parse_p^.pos;       {init input stream parsing position}
+  fr_p^.case := syn.parse_p^.case;     {init current char case interpretation}
+  fr_p^.tagged := true;                {there is now a tag since start of level}
 
   syn.parse_p := fr_p;                 {the current state is now in this new frame}
   end;
@@ -130,6 +168,7 @@ begin
       if old_p^.level = syn.parse_p^.level then begin {popping within same level ?}
         old_p^.case := syn.parse_p^.case; {update to current char case interpretation}
         end;
+      old_p^.tagged := old_p^.tagged or syn.parse_p^.tagged; {update tagged state}
       end
     else begin                         {completely restore to the old state}
       syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
@@ -169,7 +208,11 @@ begin
   prev_p := lev_p^.prev_p;             {point to frame before this level}
   if prev_p = nil then return;         {no previous frame (shouldn't happen) ?}
 
-  popback (syn, prev_p, lev_p, match); {do the pop, conditionally update state}
+  popback (                            {pop the temporary state stack}
+    syn,                               {SYN library use state}
+    prev_p,                            {frame to pop back to}
+    lev_p,                             {remove this frame and all following it}
+    match and syn.parse_p^.tagged);    {keep syntax tree entries and update state}
   end;
 {
 ********************************************************************************
@@ -202,5 +245,45 @@ begin
   prev_p := save_p^.prev_p;            {point to frame with saved state}
   if prev_p = nil then return;         {no previous frame (shouldn't happen) ?}
 
-  popback (syn, prev_p, save_p, match); {do the pop, conditionally update state}
+  popback (                            {pop the temporary state stack}
+    syn,                               {SYN library use state}
+    prev_p,                            {frame to pop back to}
+    save_p,                            {remove this frame and all following it}
+    match and syn.parse_p^.tagged);    {keep syntax tree entries and update state}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_FPARSE_TAG_POP (SYN, MATCH)
+*
+*   Pop the state off the temporary state stack to before the last tag start.
+*
+*   MATCH indicates whether the input stream matched the syntax definition.
+*
+*   When MATCH is TRUE, then the orginal state before this level is updated to
+*   the current state, and nothing is done to the syntax tree.
+*
+*   When MATCH is FALSE, then the original state before this level is restored.
+*   The syntax tree is also restored to what it was when this level was entered.
+}
+procedure syn_fparse_tag_pop (         {pop tag from the stack}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      match: boolean);             {TRUE save/update state, FALSE restore state}
+  val_param;
+
+var
+  tag_p: syn_fparse_p_t;               {points to frame after saved state}
+  prev_p: syn_fparse_p_t;              {points to original state that was saved}
+
+begin
+  tag_p := syn.parse_p^.frame_tag_p;   {point to frame to remove}
+  if tag_p = nil then return;          {not in a tag ?}
+  prev_p := tag_p^.prev_p;             {point to frame with saved state}
+  if prev_p = nil then return;         {no previous frame (shouldn't happen) ?}
+
+  popback (                            {pop the temporary state stack}
+    syn,                               {SYN library use state}
+    prev_p,                            {frame to pop back to}
+    tag_p,                             {remove this frame and all following it}
+    match);                            {keep syntax tree entries and update state}
   end;

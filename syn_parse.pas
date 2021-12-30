@@ -1,4 +1,5 @@
-{   Routines for parsing the input stream and building the syntax tree.
+{   High level routines for parsing the input stream and building the syntax
+*   tree.
 }
 module syn_parse;
 define syn_parse_coll;
@@ -32,8 +33,9 @@ var
   match: boolean;                      {the input stream matched the syntax definition}
 
 begin
-  fline_coll_line_first (coll, syn.pos_start.line_p); {get pointer to first input line}
-  syn.pos_start.ind := 0;              {init position to before first char}
+  fline_cpos_coll_start (              {save parse start position}
+    syn.pos_start,                     {input stream position to set}
+    coll);                             {collection to set position to start of}
   syn.parsefunc_p := syfunc_p;         {save pointer to top level syntax to parse}
 
   syn_fparse_init (syn);               {init temp state stack for parsing}
@@ -43,6 +45,7 @@ begin
   syn.parse_p^.tent_p := syn.sytree_p; {init curr tree entry to the root entry}
   syn.pos_err := syn.pos_start;        {init farthest character parsed to}
   syn.err := false;                    {doing normal parse, not error re-parse}
+  syn.err_end := false;                {not reached err char on error re-parse}
 
   match := syfunc_p^ (syn);            {parse, TRUE iff input matched syntax}
   syn.err := not match;                {remember whether there was error or not}
@@ -82,8 +85,10 @@ var
 begin
   if not syn.err then return;          {no previous error, ignore request ?}
 
-  syn_stack_init (syn);                {init temp data stack, ready for use}
+  syn_fparse_init (syn);               {init temp state stack for parsing}
   syn_tree_init (syn);                 {init syntax tree, empty, ready to add to}
+  syn.parse_p^.tent_p := syn.sytree_p; {init curr tree entry to the root entry}
+  syn.err_end := false;                {init to not reached err reparse end}
 
   syfunc_p := syn.parsefunc_p;         {get pointer to top level syntax routine}
   discard( syfunc_p^ (syn) );          {parse, stop when reach error character}
