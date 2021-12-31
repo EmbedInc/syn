@@ -16,6 +16,7 @@ call src_pas %srcdir% %libname%_names
 call src_pas %srcdir% %libname%_p
 call src_pas %srcdir% %libname%_parse
 call src_pas %srcdir% %libname%_stack
+call src_pas %srcdir% %libname%_trav
 call src_pas %srcdir% %libname%_tree
 
 call src_lib %srcdir% %libname%

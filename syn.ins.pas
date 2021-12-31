@@ -30,7 +30,6 @@ const
   syn_subsys_k = -75;                  {SYN library subsystem ID}
   syn_names_nbuck_k = 64;              {number of buckets in syntax names symbol table}
   syn_name_maxlen_k = 32;              {max name of a user-defined syntax construction}
-
 {
 *   Special values that can be returned when a 0-255 character code is normally
 *   expected.
@@ -39,6 +38,13 @@ const
   syn_ichar_eof_k = -2;                {end of current file (end of subordinate collection)}
   syn_ichar_eod_k = -3;                {end of all input data}
   syn_ichar_inv_k = -4;                {invalid, should not match anything}
+{
+*   Special tag values that can be returned by SYN_TRAV_TAG_NEXT.  All user tag
+*   values are greater than 0.  These special tag values are 0 or less.
+}
+  syn_tag_end_k = 0;                   {end of syntax level}
+  syn_tag_ntag_k = -1;                 {next syntax tree entry is not a tag}
+  syn_tag_err_k = -2;                  {error end of syntax tree encountered}
 
 type
   syn_charcase_k_t = (                 {how to handle input stream character case}
@@ -46,7 +52,13 @@ type
     syn_charcase_up_k,                 {convert input to upper case}
     syn_charcase_asis_k);              {do not alter input stream characters (default)}
 
-  syn_ttype_k_t = (                    {the different syntax tree entry types}
+  syn_tent_k_t = (                     {user-visible syntax tree entry types}
+    syn_tent_err_k,                    {error end of syntax tree}
+    syn_tent_end_k,                    {end of current level}
+    syn_tent_sub_k,                    {subordinate level is here}
+    syn_tent_tag_k);                   {tagged input string}
+
+  syn_ttype_k_t = (                    {internal syntax tree entry types}
     syn_ttype_lev_k,                   {start of a syntax level}
     syn_ttype_sub_k,                   {link to subordinate level}
     syn_ttype_tag_k,                   {tagged item}
@@ -92,6 +104,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
 
   syn_ftrav_p_t = ^syn_ftrav_t;
   syn_ftrav_t = record                 {temp state stack frame during tree traversal}
+    prev_p: syn_ftrav_p_t;             {points to previous stack frame}
     tent_p: syn_tent_p_t;              {points to current syntax tree frame}
     end;
 
@@ -119,7 +132,8 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     {
     *   State used when traversing the syntax tree.
     }
-    trav_p: syn_ftrav_p_t;             {to current tree traversing state stack frame}
+    tent_p: syn_tent_p_t;              {pointer to current syntax tree entry}
+    travstk_p: syn_ftrav_p_t;          {pointer to current traversing stack entry}
     end;
 
   syn_parsefunc_p_t = ^function (      {pointer to function to parse a construction}
@@ -127,7 +141,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     :boolean;                          {syntax matched, tree possibly extended}
     val_param;
 
-  syn_pos_h_t = syn_ftrav_p_t;         {user handle to syntax tree position}
+  syn_treepos_t = syn_tent_p_t;        {user-stored syntax tree position}
 {
 ********************************************************************************
 *
@@ -164,73 +178,62 @@ procedure syn_parse_err_reparse (      {reparse after error, builds tree up to e
 {
 ********************************************************************************
 *
-*   Routines for walking the syntax tree.
+*   Routines for traversing the syntax tree.
 }
-procedure syn_pos_del (                {delete previously saved tree position}
-  in out  syn: syn_t;                  {SYN library use state}
-  in out  syn_pos_h: syn_pos_h_t);     {pos to delete, returned invalid}
-  val_param; extern;
-
-procedure syn_pos_down (               {go down one level in syntax tree}
-  in out  syn: syn_t);                 {SYN library use state}
-  val_param; extern;
-
-procedure syn_pos_down_cond (          {go down one level in syntax tree if exists here}
-  in out  syn: syn_t);                 {SYN library use state}
-  val_param; extern;
-
-procedure syn_pos_goto (               {go to previously saved tree position}
-  in out  syn: syn_t;                  {SYN library use state}
-  in      syn_pos_h: syn_pos_h_t);     {previously saved position}
-  val_param; extern;
-
-procedure syn_pos_pop (                {pop and go to tree position from internal stack}
-  in out  syn: syn_t);                 {SYN library use state}
-  val_param; extern;
-
-procedure syn_pos_popdel (             {pop and delete position on stack, keep curr pos}
-  in out  syn: syn_t);                 {SYN library use state}
-  val_param; extern;
-
-procedure syn_pos_push (               {push current tree position onto internal stack}
-  in out  syn: syn_t);                 {SYN library use state}
-  val_param; extern;
-
-procedure syn_pos_reset (              {reset position to start of syntax tree}
-  in out  syn: syn_t);                 {SYN library use state}
-  val_param; extern;
-
-procedure syn_pos_save (               {save current tree position}
-  in out  syn: syn_t;                  {SYN library use state}
-  out     syn_pos_h: syn_pos_h_t);     {returned saved position}
-  val_param; extern;
-
-procedure syn_pos_up (                 {up to parent syntax tree level}
-  in out  syn: syn_t);                 {SYN library use state}
-  val_param; extern;
-
-procedure syn_pos_up_cond (            {up to parent syntax level if at end of curr}
-  in out  syn: syn_t);                 {SYN library use state}
-  val_param; extern;
-
-procedure syn_tag_cpos_first (         {get first char position of curr tag}
-  in out  syn: syn_t;                  {SYN library use state}
-  out     cpos: fline_cpos_t);         {returned character position}
-  val_param; extern;
-
-procedure syn_tag_cpos_last (          {get last char position of curr tag}
-  in out  syn: syn_t;                  {SYN library use state}
-  out     cpos: fline_cpos_t);         {returned character position}
-  val_param; extern;
-
-function syn_tag_next (                {get next tag at curr syntax tree level}
+function syn_trav_down (               {down into subordinate level from curr entry}
   in out  syn: syn_t)                  {SYN library use state}
-  :sys_int_machine_t;                  {1-N user tag number, or SYN_TAG_xxx_K}
+  :boolean;                            {successfully entered subordinate level}
   val_param; extern;
 
-procedure syn_tag_string (             {get string tagged by current tag}
+procedure syn_trav_goto (              {go to previously-saved syn tree position}
   in out  syn: syn_t;                  {SYN library use state}
-  in out  s: univ string_var_arg_t);   {returned string}
+  in      pos: syn_treepos_t);         {saved position to go to}
+  val_param; extern;
+
+procedure syn_trav_init (              {init traversion, at start, stack empty}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+function syn_trav_level (              {get nesting level of curr syntax tree pos}
+  in out  syn: syn_t)                  {SYN library use state}
+  :sys_int_machine_t;                  {0-N, 0 at top level}
+  val_param; extern;
+
+function syn_trav_next (               {to next syntax tree entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :syn_tent_k_t;                       {type of syntax tree entry found}
+  val_param; extern;
+
+function syn_trav_next_down (          {into sub level of next entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {next was sub level, moved down}
+  val_param; extern;
+
+function syn_trav_next_tag (           {to next entry, return its tag value}
+  in out  syn: syn_t)                  {SYN library use state}
+  :sys_int_machine_t;                  {1-N tag number or SYN_TAG_xxx_K}
+  val_param; extern;
+
+procedure syn_trav_pop (               {restore curr syntx tree pos from stack}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_trav_popdel (            {pop syn tree pos from stack, stay curr pos}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_trav_push (              {save curr syntax tree pos on internal stack}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_trav_save (              {save current syntax tree position}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     pos: syn_treepos_t);         {returned syntax tree position}
+  val_param; extern;
+
+function syn_trav_up (                 {pop up to parent syntax tree level}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {successfully popped to parent level}
   val_param; extern;
 {
 ********************************************************************************

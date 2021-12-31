@@ -49,7 +49,8 @@ begin
   syn_p^.parse_p := nil;
   syn_p^.parsefunc_p := nil;
 
-  syn_p^.trav_p := nil;
+  syn_p^.tent_p := nil;
+  syn_p^.travstk_p := nil;
   end;
 {
 ********************************************************************************

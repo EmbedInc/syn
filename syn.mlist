@@ -5,4 +5,5 @@ syn_names.obj
 syn_p.obj
 syn_parse.obj
 syn_stack.obj
+syn_trav.obj
 syn_tree.obj
