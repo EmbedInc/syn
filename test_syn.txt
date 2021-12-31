@@ -1,0 +1,9 @@
+                             Program TEST_SYN
+                             31 December 2021
+
+test_syn [fnam]
+
+Test program for the SYN library.  A SYN library syntax definition file is
+read, and the resulting syntax tree shown.  The mandatory ".syn" file name
+suffix may be omitted.  The default file name is SYN.SYN in the current
+directory.
