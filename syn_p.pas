@@ -67,7 +67,7 @@ begin
     if syn.err
       then begin                       {doing an error re-parse}
         syn.err_end := true;           {indicate the error char has been reached}
-        syn_p_ichar := syn_ichar_eod_k; {return arbitrary value}
+        syn_p_ichar := syn_ichar_inv_k; {return invalid character}
         return;
         end
       else begin                       {doing normal parse}

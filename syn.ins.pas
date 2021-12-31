@@ -38,6 +38,7 @@ const
   syn_ichar_eol_k = -1;                {end of line}
   syn_ichar_eof_k = -2;                {end of current file (end of subordinate collection)}
   syn_ichar_eod_k = -3;                {end of all input data}
+  syn_ichar_inv_k = -4;                {invalid, should not match anything}
 
 type
   syn_charcase_k_t = (                 {how to handle input stream character case}
