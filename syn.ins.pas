@@ -178,7 +178,7 @@ procedure syn_parse_err_reparse (      {reparse after error, builds tree up to e
 {
 ********************************************************************************
 *
-*   Routines for traversing the syntax tree.
+*   Low level routines for traversing the syntax tree.
 }
 function syn_trav_down (               {down into subordinate level from curr entry}
   in out  syn: syn_t)                  {SYN library use state}
@@ -197,6 +197,11 @@ procedure syn_trav_init (              {init traversion, at start, stack empty}
 function syn_trav_level (              {get nesting level of curr syntax tree pos}
   in out  syn: syn_t)                  {SYN library use state}
   :sys_int_machine_t;                  {0-N, 0 at top level}
+  val_param; extern;
+
+procedure syn_trav_level_name (        {get the name of the current syntax tree level}
+  in out  syn: syn_t;                  {SYN library use state}
+  in out  name: univ string_var_arg_t); {returned name}
   val_param; extern;
 
 function syn_trav_next (               {to next syntax tree entry}
@@ -229,6 +234,21 @@ procedure syn_trav_push (              {save curr syntax tree pos on internal st
 procedure syn_trav_save (              {save current syntax tree position}
   in out  syn: syn_t;                  {SYN library use state}
   out     pos: syn_treepos_t);         {returned syntax tree position}
+  val_param; extern;
+
+function syn_trav_tag (                {get ID of current tag entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :sys_int_machine_t;                  {1-N tag number or SYN_TAG_xxx_K}
+  val_param; extern;
+
+procedure syn_trav_tag_start (         {get start loc for tag at curr tree entry}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     pos: fline_cpos_t);          {start of tagged string in soruce lines}
+  val_param; extern;
+
+procedure syn_trav_tag_string (        {get string tagged by current tree entry}
+  in out  syn: syn_t;                  {SYN library use state}
+  in out  tagstr: univ string_var_arg_t); {returned tagged string}
   val_param; extern;
 
 function syn_trav_up (                 {pop up to parent syntax tree level}

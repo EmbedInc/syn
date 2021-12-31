@@ -7,7 +7,11 @@ define syn_trav_down;
 define syn_trav_next_down;
 define syn_trav_up;
 define syn_trav_level;
+define syn_trav_level_name;
 define syn_trav_next_tag;
+define syn_trav_tag;
+define syn_trav_tag_start;
+define syn_trav_tag_string;
 define syn_trav_save;
 define syn_trav_goto;
 define syn_trav_push;
@@ -153,6 +157,29 @@ begin
 {
 ********************************************************************************
 *
+*   Subroutine SYN_TRAV_LEVEL_NAME (SYN, NAME)
+*
+*   Get the name of the current syntax tree level into NAME.
+}
+procedure syn_trav_level_name (        {get the name of the current syntax tree level}
+  in out  syn: syn_t;                  {SYN library use state}
+  in out  name: univ string_var_arg_t); {returned name}
+  val_param;
+
+var
+  lev_p: syn_tent_p_t;                 {pointer to start of level syntax tree entry}
+
+begin
+  name.len := 0;                       {init the returned string to empty}
+  lev_p := syn.tent_p^.levst_p;        {get pointer to start of level entry}
+  if lev_p = nil then return;          {no start of level available (shouldn't happen) ?}
+  if lev_p^.lev_name_p = nil then return; {name of this level unavailable ?}
+
+  string_copy (lev_p^.lev_name_p^, name); {return the name of the current level}
+  end;
+{
+********************************************************************************
+*
 *   Function SYN_TRAV_NEXT_TAG (SYN)
 *
 *   Goes to the next syntax tree entry and return its tag ID.  On success, the
@@ -187,6 +214,82 @@ syn_ttype_err_k: begin                 {hit error end of syntax tree}
 otherwise
     syn_trav_next_tag := syn_tag_ntag_k; {not a tag entry, didn't move}
     end;
+  end;
+{
+********************************************************************************
+*
+*   Function SYN_TRAV_TAG (SYN)
+*
+*   Get the tag ID for the current syntax tree entry.  SYN_TAG_NTAG_K is
+*   returned if the current syntax tree position is on at a tag.
+}
+function syn_trav_tag (                {get ID of current tag entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :sys_int_machine_t;                  {1-N tag number or SYN_TAG_NTAG_K}
+  val_param;
+
+begin
+  if syn.tent_p^.ttype <> syn_ttype_tag_k then begin {not at a tag ?}
+    syn_trav_tag := syn_tag_ntag_k;
+    return;
+    end;
+
+  syn_trav_tag := syn.tent_p^.tag;     {return the tag ID}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_TRAV_TAG_START (SYN, POS)
+*
+*   Get the position of the start of the string tagged by the current syntax
+*   tree entry into POS.  If the current syntax tree entry is not a tag, then
+*   POS is set to invalid.
+}
+procedure syn_trav_tag_start (         {get start loc for tag at curr tree entry}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     pos: fline_cpos_t);          {start of tagged string in soruce lines}
+  val_param;
+
+begin
+  if syn.tent_p^.ttype <> syn_ttype_tag_k then begin {not at a tag ?}
+    pos.line_p := nil;                 {return invalid position}
+    pos.ind := 0;
+    return;
+    end;
+
+  pos := syn.tent_p^.tag_st;           {return pos of first tagged char}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_TRAV_TAG_STRING (SYN, TAGSTR)
+*
+*   Get the source string tagged by the current syntax tree entry.  The empty
+*   string is returned if the current syntax tree entry is not a tag.
+}
+procedure syn_trav_tag_string (        {get string tagged by current tree entry}
+  in out  syn: syn_t;                  {SYN library use state}
+  in out  tagstr: univ string_var_arg_t); {returned tagged string}
+  val_param;
+
+var
+  pos: fline_cpos_t;                   {source character position}
+  ch: char;                            {input string character}
+
+begin
+  tagstr.len := 0;                     {init the returned string to empty}
+  if syn.tent_p^.ttype <> syn_ttype_tag_k {not at a tag ?}
+    then return;
+
+  pos := syn.tent_p^.tag_st;           {init to starting character position}
+  while                                {back here until after end of tagged string}
+      (pos.ind <> syn.tent_p^.tag_af.ind) or
+      (pos.line_p <> syn.tent_p^.tag_af.line_p)
+      do begin
+    if not fline_char (pos, ch)        {unable to get this character ?}
+      then exit;
+    string_append1 (tagstr, ch);       {append this char to end of returned string}
+    end;                               {back to get the next character}
   end;
 {
 ********************************************************************************
