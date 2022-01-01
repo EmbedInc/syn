@@ -23,6 +23,7 @@ var
   coll_p: fline_coll_p_t;              {the input file lines in FLINE collection}
   syn_p: syn_p_t;                      {so SYN library use state}
   cpos: fline_cpos_t;                  {character position within input lines}
+  tabort: boolean;                     {abort processing syntax tree}
 
   opt:                                 {upcased command line option}
     %include '(cog)lib/string_treename.ins.pas';
@@ -40,6 +41,106 @@ function syn_ch_toplev (               {declare the top level syntax parsing rou
   in out  syn: syn_t)                  {SYN library use state}
   :boolean;                            {syntax matched}
   val_param; extern;
+{
+********************************************************************************
+*
+*   Local subroutine INDENT (LEVEL)
+*
+*   Indent the start of a new line according to the nesting level.  Level 0
+*   starts in column 1.  Each level lower is indented an additional 2 spaces.
+*   This routine writes blanks to STDOUT according to the nesting level.  The
+*   line is not ended.
+}
+procedure indent (                     {indent new line according to nesting level}
+  in      level: sys_int_machine_t);   {0-N level below top}
+  val_param; internal;
+
+begin
+  if level <= 0 then return;           {don't indent at all ?}
+  write (' ':(level*2));
+  end;
+{
+********************************************************************************
+*
+*   Local subroutine SHOW_LEVEL
+*
+*   Traverse and show the current syntax tree level.  The current syntax tree
+*   position should be at the start of the level to show.
+}
+procedure show_level;
+  val_param; internal;
+
+var
+  level: sys_int_machine_t;            {nesting level, 0 at top}
+  name: string_var32_t;                {name of this syntax level}
+  tent: syn_tent_k_t;                  {syntax tree entry type}
+  tagid: sys_int_machine_t;            {ID of current tag}
+  cpos: fline_cpos_t;                  {scratch input string character position}
+  tagstr: string_var80_t;              {tagged string}
+
+label
+  loop_ent, levend;
+
+begin
+  name.max := size_char(name.str);     {init local var strings}
+  tagstr.max := size_char(tagstr.str);
+
+  level := syn_trav_level (syn_p^);    {get nesting level here}
+  syn_trav_level_name (syn_p^, name);  {get the name of this level}
+
+  indent (level);
+  writeln ('Level ', level, ', name "', name.str:name.len, '"');
+
+loop_ent:                              {back here to get each new entry}
+  if tabort then return;               {tree traversal already aborted ?}
+  tent := syn_trav_next (syn_p^);      {to next entry, get its type ID}
+  case tent of                         {what type of entry is this ?}
+syn_tent_err_k: begin                  {error end of syntax tree}
+      indent (level);
+      writeln ('Error end');
+      tabort := true;                  {abort tree traversal}
+      goto levend;
+      end;
+syn_tent_end_k: begin                  {normal end of this level}
+      indent (level);
+      writeln ('End of level');
+      goto levend;
+      end;
+syn_tent_sub_k: begin                  {subordinate level}
+      indent (level);
+      writeln ('Subordinate level');
+      if not syn_trav_down (syn_p^) then begin {failed to go down to sub level ?}
+        indent (level);
+        writeln ('Failed to enter sub level');
+        tabort := true;
+        return;
+        end;
+      show_level;                      {show the subordinate level}
+      end;
+syn_tent_tag_k: begin                  {tagged source string}
+      tagid := syn_trav_tag (syn_p^);  {get tag ID}
+      syn_trav_tag_start (syn_p^, cpos); {get tagged string start position}
+      syn_trav_tag_string (syn_p^, tagstr); {get tagged string}
+      indent (level);
+      writeln ('Tag ', tagid,
+        ' line ', cpos.line_p^.lnum, ' col ', cpos.ind,
+        '  "', tagstr.str:tagstr.len, '"');
+      end;
+otherwise
+    indent (level);
+    writeln ('Unexpected entry with type ID ', ord(tent));
+    end;
+  goto loop_ent;
+
+levend:                                {hit end of this level}
+  if not tabort then begin             {not aborting tree traversal ?}
+    if not syn_trav_up (syn_p^) then begin {failed to pop to parent level ?}
+      indent (level);
+      writeln ('Failure on popping to parent level');
+      tabort := true;
+      end;
+    end;
+  end;
 {
 ********************************************************************************
 *
@@ -136,7 +237,9 @@ done_opts:                             {done with all the command line options}
 {
 *   Show the resulting syntax tree.
 }
-
+  syn_trav_init (syn_p^);              {init for traversing the syntax tree}
+  tabort := false;                     {init to not abort syntax tree processing}
+  show_level;                          {show the current syntax tree level}
 {
 *   Clean up and leave.
 }

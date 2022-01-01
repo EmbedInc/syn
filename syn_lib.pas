@@ -36,7 +36,6 @@ begin
   syn_p^.mem_tree_p := nil;
   syn_p^.sytree_p := nil;
   syn_p^.sytree_last_p := nil;
-  syn_p^.coll_p := nil;
   syn_p^.names := false;
   syn_p^.stack_exist := false;
 

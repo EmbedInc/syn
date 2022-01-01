@@ -21,7 +21,7 @@ procedure syn_names_init (             {init syntax names symbol table to empty}
   val_param;
 
 begin
-  syn_stack_del (syn);                 {delete any previously existing temp state stack}
+  syn_names_del (syn);                 {delete any previously existing names table}
 
   string_hash_create (                 {create the syntax construction names table}
     syn.nametab,                       {symbol table to create}

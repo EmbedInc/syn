@@ -114,7 +114,6 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     mem_tree_p: util_mem_context_p_t;  {points to private mem for syntax tree}
     sytree_p: syn_tent_p_t;            {points to first syntax tree entry}
     sytree_last_p: syn_tent_p_t;       {points to last-created syntax tree entry}
-    coll_p: fline_coll_p_t;            {points to collection of input lines}
     nametab: string_hash_handle_t;     {table of syntax construction names}
     names: boolean;                    {NAMETAB has been created}
     stack: util_stack_handle_t;        {temp stacked state when parsing and traversing}

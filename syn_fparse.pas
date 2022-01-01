@@ -26,7 +26,7 @@ var
   fr_p: syn_fparse_p_t;                {pointer to the root state frame}
 
 begin
-  syn_stack_init (syn);                {create new empty stack, delete an old}
+  syn_stack_init (syn);                {create new empty stack, delete any old}
 
   syn_stack_push (syn, sizeof(fr_p^), fr_p); {create the root stack frame}
 

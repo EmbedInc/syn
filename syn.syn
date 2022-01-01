@@ -1,5 +1,3 @@
-/*   Syntax definition of the syntax definition language.
-/*
 .symbol toplev[syn_ch_toplev]
 .symbol command[syn_chsyn_command]
 .symbol declare[syn_chsyn_declare]
