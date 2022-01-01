@@ -18,6 +18,7 @@
 }
 module syn_chsyn;
 define syn_chsyn_command;
+define syn_ch_toplev;
 %include 'syn2.ins.pas';
 
 function syn_chsyn_expression (
@@ -819,4 +820,37 @@ leave:
   if syn.err_end then return;
   syn_p_constr_end (syn, match);
   syn_chsyn_command := match;
+  end;
+{
+********************************************************************************
+}
+function syn_ch_toplev (
+  in out  syn: syn_t)
+  :boolean;
+  val_param;
+
+var
+  match: boolean;                      {syntax matched}
+
+label
+  leave;
+
+begin
+  syn_ch_toplev := false;              {init to syntax did not match}
+  syn_p_constr_start (syn, 'TOPLEV', 6);
+
+  syn_p_charcase (syn, syn_charcase_down_k);
+
+  while true do begin
+    match := syn_chsyn_command (syn);
+    if not match then exit;
+    end;
+  if syn.err_end then return;
+
+  match := syn_p_test_eod (syn);
+
+leave:
+  if syn.err_end then return;
+  syn_p_constr_end (syn, match);
+  syn_ch_toplev := match;
   end;

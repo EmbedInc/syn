@@ -1,13 +1,13 @@
 {   Routines that handle frames on the temporary state stack during parsing.
 }
 module syn_fparse;
-define fparse_init;
-define fparse_level;
-define fparse_save;
-define fparse_tag;
-define fparse_level_pop;
-define fparse_save_pop;
-define fparse_tag_pop;
+define syn_fparse_init;
+define syn_fparse_level;
+define syn_fparse_save;
+define syn_fparse_tag;
+define syn_fparse_level_pop;
+define syn_fparse_save_pop;
+define syn_fparse_tag_pop;
 %include 'syn2.ins.pas';
 {
 ********************************************************************************

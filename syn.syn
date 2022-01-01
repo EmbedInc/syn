@@ -1,5 +1,6 @@
 /*   Syntax definition of the syntax definition language.
 /*
+.symbol toplev[syn_ch_toplev]
 .symbol command[syn_chsyn_command]
 .symbol declare[syn_chsyn_declare]
 .symbol define[syn_chsyn_define]
@@ -101,9 +102,12 @@
     )
 
 .define COMMAND .as
-  .charcase [lower]
   pad (
-  .EOD[1]
-  .or declare[3]
-  .or define[2]
-  )
+    declare[1]
+    .or define[2]
+    )
+
+.define toplev .as
+  .charcase [lower]
+  .occurs[0 to inf] command[1]
+  .EOD[2]

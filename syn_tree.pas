@@ -3,6 +3,9 @@
 module syn_tree;
 define syn_tree_init;
 define syn_tree_del;
+define syn_tree_add_sub;
+define syn_tree_add_tag;
+define syn_tree_add_err;
 define syn_tree_trunc;
 %include 'syn2.ins.pas';
 {
@@ -139,7 +142,7 @@ begin
 {
 ********************************************************************************
 *
-*   Subroutine SYN_TREE_ADD_LEV (SYN, PAR, NAME_P, LEV_P)
+*   Subroutine SYN_TREE_ADD_SUB (SYN, PAR, NAME_P, LEV_P)
 *
 *   Start a new subordinate syntax tree level after the entry PAR.  NAME_P
 *   points to the name string for this new level.  LEV_P will be returned
