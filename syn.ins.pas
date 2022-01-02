@@ -123,7 +123,8 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     }
     tent_unused_p: syn_tent_p_t;       {points to chain of unused syn tree entries}
     pos_start: fline_cpos_t;           {starting position of current parse}
-    pos_err: fline_cpos_t;             {farthest parsing position reached}
+    pos_err: fline_cpos_t;             {farthest parsing position char returned for}
+    pos_errnext: fline_cpos_t;         {parsing position after returning at POS_ERR}
     err: boolean;                      {doing error re-parse}
     err_end: boolean;                  {err char has been reached in error reparse}
     parse_p: syn_fparse_p_t;           {to current parsing state, on stack}

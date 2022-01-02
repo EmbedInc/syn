@@ -45,6 +45,8 @@ begin
   syn_p^.pos_err.line_p := nil;
   syn_p^.pos_err.ind := 0;
   syn_p^.err := false;
+  syn_p^.pos_errnext.line_p := nil;
+  syn_p^.pos_errnext.ind := 0;
   syn_p^.parse_p := nil;
   syn_p^.parsefunc_p := nil;
 

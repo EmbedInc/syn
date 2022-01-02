@@ -44,6 +44,7 @@ begin
   syn.parse_p^.tent_p := syn.sytree_p; {init curr tree entry to the first}
 
   syn.pos_err := syn.pos_start;        {init farthest character parsed to}
+  syn.pos_errnext := syn.pos_start;
   syn.err := false;                    {doing normal parse, not error re-parse}
   syn.err_end := false;                {not reached err char on error re-parse}
 
@@ -81,6 +82,7 @@ procedure syn_parse_err_reparse (      {reparse after error, builds tree up to e
 
 var
   syfunc_p: syn_parsefunc_p_t;         {pointer to top level syntax to parse}
+  ent_p: syn_tent_p_t;                 {pointer to new error end entry}
 
 begin
   if not syn.err then return;          {no previous error, ignore request ?}
@@ -92,6 +94,13 @@ begin
 
   syfunc_p := syn.parsefunc_p;         {get pointer to top level syntax routine}
   discard( syfunc_p^ (syn) );          {parse, stop when reach error character}
+
+  syn_tree_add_err (                   {add error end entry to syntax tree}
+    syn,                               {SYN library use state}
+    syn.parse_p^.tent_p^,              {parent entry to add after}
+    syn.pos_err,                       {error character position}
+    ent_p);                            {returned pointer to the new entry}
+  syn.parse_p^.tent_p := ent_p;        {make the new entry current}
   end;
 {
 ********************************************************************************

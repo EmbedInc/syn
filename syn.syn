@@ -100,12 +100,10 @@
     )
 
 .define COMMAND .as
-  pad (
-    declare[1]
-    .or define[2]
-    )
+  declare[1]
+  .or define[2]
 
 .define toplev .as
   .charcase [lower]
-  .occurs[0 to inf] command[1]
-  .EOD[2]
+  .occurs[0 to inf] (pad command[1])
+  pad .EOD[2]

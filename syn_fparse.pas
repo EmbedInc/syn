@@ -140,46 +140,6 @@ begin
 {
 ********************************************************************************
 *
-*   Local subroutine POPBACK (SYN, OLD_P, POP_P, UPDATE)
-*
-*   Pop the temporary state stack to remove the entry POP_P and everything
-*   after it.  OLD_P will be the new top of stack entry.
-*
-*   When UPDATE is false, the state is completely restored to what it was when
-*   the entry at POP_P was created.  Any syntax tree entries created since then
-*   are also deleted.
-*
-*   When UPDATE is true, then the current input parsing position and the current
-*   syntax tree are preserved.  Put another way, the state at OLD_P is updated
-*   with the current state before the frames are popped from the stack.
-}
-procedure popback (                    {pop frame and all after it off the stack}
-  in out  syn: syn_t;                  {SYN library use state}
-  in      old_p: syn_fparse_p_t;       {points to old frame that will be current}
-  in      pop_p: syn_fparse_p_t;       {pop this frame and all after it}
-  in      update: boolean);            {update old state to current}
-  val_param; internal;
-
-begin
-  if update
-    then begin                         {update old state to the current}
-      old_p^.tent_p := syn.parse_p^.tent_p; {update to current syntax tree state}
-      old_p^.pos := syn.parse_p^.pos;  {update to current input stream position}
-      if old_p^.level = syn.parse_p^.level then begin {popping within same level ?}
-        old_p^.case := syn.parse_p^.case; {update to current char case interpretation}
-        end;
-      old_p^.tagged := old_p^.tagged or syn.parse_p^.tagged; {update tagged state}
-      end
-    else begin                         {completely restore to the old state}
-      syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
-      end
-    ;
-
-  syn_stack_popback (syn, pop_p);      {pop the frames off the temp state stack}
-  end;
-{
-********************************************************************************
-*
 *   Subroutine SYN_FPARSE_LEVEL_POP (SYN, MATCH)
 *
 *   Pop the state off the temporary state stack associated with the current
@@ -200,19 +160,34 @@ procedure syn_fparse_level_pop (       {pop curr syntax level from stack}
 
 var
   lev_p: syn_fparse_p_t;               {points to start of current level}
-  prev_p: syn_fparse_p_t;              {points to previous frame before this level}
+  old_p: syn_fparse_p_t;               {points to previous frame before this level}
 
 begin
   lev_p := syn.parse_p^.frame_lev_p;   {point to frame that started this level}
   if lev_p = nil then return;          {not in a level ?}
-  prev_p := lev_p^.prev_p;             {point to frame before this level}
-  if prev_p = nil then return;         {no previous frame (shouldn't happen) ?}
+  old_p := lev_p^.prev_p;              {point to frame before this level}
+  if old_p = nil then return;          {no previous frame (shouldn't happen) ?}
 
-  popback (                            {pop the temporary state stack}
-    syn,                               {SYN library use state}
-    prev_p,                            {frame to pop back to}
-    lev_p,                             {remove this frame and all following it}
-    match and syn.parse_p^.tagged);    {keep syntax tree entries and update state}
+  if match
+    then begin                         {update old state to the current}
+      old_p^.pos := syn.parse_p^.pos;  {update to current input stream position}
+      if syn.parse_p^.tagged
+        then begin                     {tags created, keep the new level}
+          old_p^.tent_p := lev_p^.tent_p^.lev_up_p; {continue on after link}
+          old_p^.tagged := true;
+          end
+        else begin                     {not tags created, delete new tree entries}
+          syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
+          end
+        ;
+      end
+    else begin                         {completely restore to the old state}
+      syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
+      end
+    ;
+
+  syn.parse_p := old_p;                {go back to the old stack frame}
+  syn_stack_popback (syn, lev_p);      {pop the frames off the temp state stack}
   end;
 {
 ********************************************************************************
@@ -237,19 +212,38 @@ procedure syn_fparse_save_pop (        {pop back to before last saved state}
 
 var
   save_p: syn_fparse_p_t;              {points to frame after saved state}
-  prev_p: syn_fparse_p_t;              {points to original state that was saved}
+  old_p: syn_fparse_p_t;               {points to original state that was saved}
 
 begin
   save_p := syn.parse_p^.frame_save_p; {point to frame to remove}
   if save_p = nil then return;         {not in temp saved state ?}
-  prev_p := save_p^.prev_p;            {point to frame with saved state}
-  if prev_p = nil then return;         {no previous frame (shouldn't happen) ?}
+  old_p := save_p^.prev_p;             {point to frame with saved state}
+  if old_p = nil then return;          {no previous frame (shouldn't happen) ?}
 
-  popback (                            {pop the temporary state stack}
-    syn,                               {SYN library use state}
-    prev_p,                            {frame to pop back to}
-    save_p,                            {remove this frame and all following it}
-    match and syn.parse_p^.tagged);    {keep syntax tree entries and update state}
+  if match
+    then begin                         {update old state to the current}
+      old_p^.pos := syn.parse_p^.pos;  {update to current input stream position}
+      if syn.parse_p^.tagged           {tagged data since save ?}
+        then begin
+          old_p^.tagged := true;       {indicate there is tagged data}
+          old_p^.tent_p := syn.parse_p^.tent_p; {continue with existing syntax tree}
+          end
+        else begin
+          syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
+          end
+        ;
+      if old_p^.level = syn.parse_p^.level then begin {popping within same level ?}
+        old_p^.case := syn.parse_p^.case; {update to current char case interpretation}
+        end;
+      old_p^.tagged := old_p^.tagged or syn.parse_p^.tagged; {update tagged state}
+      end
+    else begin                         {completely restore to the old state}
+      syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
+      end
+    ;
+
+  syn.parse_p := old_p;                {go back to the old stack frame}
+  syn_stack_popback (syn, save_p);     {pop the frames off the temp state stack}
   end;
 {
 ********************************************************************************
@@ -273,17 +267,28 @@ procedure syn_fparse_tag_pop (         {pop tag from the stack}
 
 var
   tag_p: syn_fparse_p_t;               {points to frame after saved state}
-  prev_p: syn_fparse_p_t;              {points to original state that was saved}
+  old_p: syn_fparse_p_t;               {points to original state that was saved}
 
 begin
   tag_p := syn.parse_p^.frame_tag_p;   {point to frame to remove}
   if tag_p = nil then return;          {not in a tag ?}
-  prev_p := tag_p^.prev_p;             {point to frame with saved state}
-  if prev_p = nil then return;         {no previous frame (shouldn't happen) ?}
+  old_p := tag_p^.prev_p;              {point to frame with saved state}
+  if old_p = nil then return;          {no previous frame (shouldn't happen) ?}
 
-  popback (                            {pop the temporary state stack}
-    syn,                               {SYN library use state}
-    prev_p,                            {frame to pop back to}
-    tag_p,                             {remove this frame and all following it}
-    match);                            {keep syntax tree entries and update state}
+  if match
+    then begin                         {update old state to the current}
+      old_p^.pos := syn.parse_p^.pos;  {update to current input stream position}
+      old_p^.tagged := true;           {there is now tagged data here}
+      if old_p^.level = syn.parse_p^.level then begin {popping within same level ?}
+        old_p^.case := syn.parse_p^.case; {update to current char case interpretation}
+        end;
+      old_p^.tent_p := syn.parse_p^.tent_p; {continue with existing syntax tree}
+      end
+    else begin                         {completely restore to the old state}
+      syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
+      end
+    ;
+
+  syn.parse_p := old_p;                {go back to the old stack frame}
+  syn_stack_popback (syn, tag_p);      {pop the frames off the temp state stack}
   end;

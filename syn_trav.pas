@@ -58,6 +58,11 @@ begin
 
   syn.tent_p := syn.tent_p^.next_p;    {go to the next entry}
   case syn.tent_p^.ttype of            {what kind of entry is this ?}
+syn_ttype_lev_k: begin
+      writeln ('INTERNAL ERROR: Unexpected start of level syntax tree entry');
+      writeln ('found within previously-started level.  In SYN_TRAV_NEXT.');
+      sys_bomb;
+      end;
 syn_ttype_sub_k: syn_trav_next := syn_tent_sub_k;
 syn_ttype_tag_k: syn_trav_next := syn_tent_tag_k;
 syn_ttype_err_k: syn_trav_next := syn_tent_err_k;

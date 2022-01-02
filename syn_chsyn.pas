@@ -73,6 +73,10 @@ function syn_chsyn_space (
 
 var
   spos: fline_cpos_t;                  {saved input stream position}
+  match: boolean;                      {syntax matched}
+
+label
+  leave;
 
 begin
   syn_chsyn_space := false;            {init to syntax did not match}
@@ -81,12 +85,21 @@ begin
   case syn_p_ichar(syn) of             {what character is it ?}
 ord(' '),
 syn_ichar_eol_k: begin
-      syn_chsyn_space := true;         {syntax matched}
+      match := true;
       end;
+otherwise
+    match := false;
     end;
-
   if syn.err_end then return;          {end of error re-parse ?}
-  syn.parse_p^.pos := spos;            {restore to original input stream position}
+
+  match := syn_chsyn_pad (syn);
+
+leave:
+  if syn.err_end then return;
+  if not match then begin
+    syn.parse_p^.pos := spos;
+    end;
+  syn_chsyn_space := match;
   end;
 {
 ********************************************************************************
@@ -106,7 +119,7 @@ begin
   match := false;
   syn_p_constr_start (syn, 'INTEGER', 7);
 
-  n := 0;                              {init number of matchine chars found}
+  n := 0;                              {init number of matching chars found}
   while true do begin
     ichar := syn_p_ichar (syn);        {get this input character}
     if syn.err_end then return;        {end of error re-parse ?}
@@ -131,22 +144,27 @@ var
   n: sys_int_machine_t;                {number of characters}
   ichar: sys_int_machine_t;            {character code}
   match: boolean;                      {syntax matched}
+  spos: fline_cpos_t;                  {saved input stream position}
 
 begin
   syn_chsyn_symbol := false;           {init to syntax did not match}
-  match := false;
   syn_p_constr_start (syn, 'SYMBOL', 6);
 
-  n := 0;                              {init number of matchine chars found}
+  n := 0;                              {init number of matching chars found}
   while true do begin
+    spos := syn.parse_p^.pos;          {save position before reading this char}
     ichar := syn_p_ichar (syn);        {get this input character}
     if syn.err_end then return;        {end of error re-parse ?}
-    if (ichar < ord('0')) or (ichar > ord('9')) {hit first non-matching char ?}
+    if not (                           {hit first non-matching char ?}
+        ((ichar >= ord('a')) and (ichar <= ord('z'))) or
+        (ichar = ord('_'))
+        )
       then exit;
     n := n + 1;                        {count one more matching character}
     end;                               {this char matches, back to try next}
-
+  syn.parse_p^.pos := spos;            {restore to before first non-matching char}
   match := n > 0;                      {syntax matched if 1 or more digits}
+
   syn_p_constr_end (syn, match);
   syn_chsyn_symbol := match;
   end;
@@ -757,15 +775,17 @@ begin
     syn_p_cpos_push (syn);
     while true do begin
       match := syn_chsyn_space (syn);
-      if not match then goto leave;
+      if not match then exit;
 
       syn_p_tag_start (syn, 2);
       match := syn_p_test_string (syn, 'external', 8);
       syn_p_tag_end (syn, match);
+      exit;
       end;
     if syn.err_end then return;
     syn_p_cpos_pop (syn, match);
     match := true;
+    exit;
     end;
   if syn.err_end then return;
   syn_p_cpos_pop (syn, match);
@@ -794,18 +814,7 @@ begin
   syn_chsyn_command := false;          {init to syntax did not match}
   syn_p_constr_start (syn, 'COMMAND', 7);
 
-  syn_p_charcase (syn, syn_charcase_down_k);
-
-  match := syn_chsyn_pad (syn);
-  if not match then goto leave;
-
   syn_p_tag_start (syn, 1);
-  match := syn_p_test_eod (syn);
-  if syn.err_end then return;
-  syn_p_tag_end (syn, match);
-  if match then goto leave;
-
-  syn_p_tag_start (syn, 3);
   match := syn_chsyn_declare (syn);
   if syn.err_end then return;
   syn_p_tag_end (syn, match);
@@ -842,10 +851,15 @@ begin
   syn_p_charcase (syn, syn_charcase_down_k);
 
   while true do begin
+    match := syn_chsyn_pad (syn);
+    if not match then exit;
     match := syn_chsyn_command (syn);
     if not match then exit;
     end;
   if syn.err_end then return;
+
+  match := syn_chsyn_pad (syn);
+  if not match then goto leave;
 
   match := syn_p_test_eod (syn);
 

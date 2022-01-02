@@ -85,6 +85,13 @@ procedure syn_stack_push (             {push new frame onto the stack}
   out     frame_p: univ_ptr);          {returned pointer to the new frame}
   val_param; extern;
 
+procedure syn_tree_add_err (           {add error end of syntax entry to syn tree}
+  in out  syn: syn_t;                  {SYN library use state}
+  in out  par: syn_tent_t;             {parent syntax tree entry}
+  in      cpos: fline_cpos_t;          {error position in input stream}
+  out     err_p: syn_tent_p_t);        {returned pointer to the new syn tree entry}
+  val_param; extern;
+
 procedure syn_tree_add_sub (           {add subordinate level to syntax tree}
   in out  syn: syn_t;                  {SYN library use state}
   in out  par: syn_tent_t;             {parent syntax tree entry}

@@ -23,6 +23,7 @@ var
   coll_p: fline_coll_p_t;              {the input file lines in FLINE collection}
   syn_p: syn_p_t;                      {so SYN library use state}
   cpos: fline_cpos_t;                  {character position within input lines}
+  line_p: string_var_p_t;              {pointer to source line}
   tabort: boolean;                     {abort processing syntax tree}
 
   opt:                                 {upcased command line option}
@@ -79,7 +80,7 @@ var
   tagstr: string_var80_t;              {tagged string}
 
 label
-  loop_ent, levend;
+  loop_ent;
 
 begin
   name.max := size_char(name.str);     {init local var strings}
@@ -99,12 +100,21 @@ syn_tent_err_k: begin                  {error end of syntax tree}
       indent (level);
       writeln ('Error end');
       tabort := true;                  {abort tree traversal}
-      goto levend;
+      return;
       end;
 syn_tent_end_k: begin                  {normal end of this level}
       indent (level);
+      if level <= 0 then begin
+        writeln ('End of syntax tree');
+        return;
+        end;
       writeln ('End of level');
-      goto levend;
+      if not syn_trav_up (syn_p^) then begin {failed to pop to parent level ?}
+        indent (level);
+        writeln ('Failure on popping to parent level');
+        tabort := true;
+        end;
+      return;
       end;
 syn_tent_sub_k: begin                  {subordinate level}
       indent (level);
@@ -122,24 +132,22 @@ syn_tent_tag_k: begin                  {tagged source string}
       syn_trav_tag_start (syn_p^, cpos); {get tagged string start position}
       syn_trav_tag_string (syn_p^, tagstr); {get tagged string}
       indent (level);
-      writeln ('Tag ', tagid,
-        ' line ', cpos.line_p^.lnum, ' col ', cpos.ind,
-        '  "', tagstr.str:tagstr.len, '"');
+      write ('Tag ', tagid, ' ');
+      if cpos.line_p = nil
+        then begin
+          writeln ('EOD');
+          end
+        else begin
+          writeln ('ine ', cpos.line_p^.lnum, ' col ', cpos.ind,
+            '  "', tagstr.str:tagstr.len, '"');
+          end
+        ;
       end;
 otherwise
     indent (level);
     writeln ('Unexpected entry with type ID ', ord(tent));
     end;
   goto loop_ent;
-
-levend:                                {hit end of this level}
-  if not tabort then begin             {not aborting tree traversal ?}
-    if not syn_trav_up (syn_p^) then begin {failed to pop to parent level ?}
-      indent (level);
-      writeln ('Failure on popping to parent level');
-      tabort := true;
-      end;
-    end;
   end;
 {
 ********************************************************************************
@@ -196,7 +204,7 @@ parm_bad:                              {jump here on got illegal parameter}
 done_opts:                             {done with all the command line options}
 
   if not iname_set then begin
-    string_vstring (fnam_in, 'syn.syn'(0), -1); {get default input file name}
+    string_vstring (fnam_in, 't.syn'(0), -1); {get default input file name}
     end;
 {
 *   Read the input file into a FLINE collection.
@@ -213,6 +221,8 @@ done_opts:                             {done with all the command line options}
     coll_p,                            {returned pointer to the collection}
     stat);
   sys_error_abort (stat, '', '', nil, 0);
+
+  writeln ('Done reading "', coll_p^.name_p^.str:coll_p^.name_p^.len, '"');
 {
 *   Parse the input file to build the syntax tree.
 }
@@ -229,7 +239,27 @@ done_opts:                             {done with all the command line options}
       end
     else begin                         {syntax error found}
       syn_parse_err_pos (syn_p^, cpos); {get position of error character}
-      writeln ('Syntax error on line ', cpos.line_p^.lnum, ' at char ', cpos.ind);
+      if cpos.line_p = nil
+        then begin                     {at end of collection}
+          writeln ('Syntax error at end of data.');
+          end
+        else begin                     {at a specific line}
+          writeln ('Syntax error on line ', cpos.line_p^.lnum, ' at char ', cpos.ind, ':');
+          if (cpos.line_p <> nil) and then (cpos.line_p^.str_p <> nil) then begin
+            line_p := cpos.line_p^.str_p;
+            writeln (line_p^.str:line_p^.len);
+            if cpos.ind <= 0 then begin
+              writeln ('Error before start of line.');
+              end;
+            if cpos.ind = 1 then begin
+              writeln ('^');
+              end;
+            if cpos.ind >= 2 then begin
+              writeln (' ':(cpos.ind-1), '^');
+              end;
+            end;
+          end
+        ;
       syn_parse_err_reparse (syn_p^);  {re-parse up to error position}
       end;
     ;

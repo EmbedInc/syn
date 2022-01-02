@@ -247,9 +247,14 @@ begin
   if ent_p = nil then return;          {no entry to delete, nothing to do ?}
 
   syn.sytree_last_p := ent_p^.back_p;  {update pointer to new last entry}
-  if syn.sytree_last_p = nil then begin {the tree is now empty ?}
-    syn.sytree_p := nil;
-    end;
+  if syn.sytree_last_p = nil
+    then begin                         {the tree is now empty}
+      syn.sytree_p := nil;
+      end
+    else begin                         {there is still at least one entry}
+      syn.sytree_last_p^.next_p := nil; {remove forward pointer to deleted entry}
+      end
+    ;
 
   syn_tree_ent_dealloc (syn, ent_p);   {deallocate this entry descriptor}
   end;

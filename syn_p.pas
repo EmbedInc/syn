@@ -56,28 +56,29 @@ function syn_p_ichar (                 {get next input char code, charcase appli
 
 var
   ch: char;                            {character from input line}
-  upderr: boolean;                     {update error position after pos advance}
+  upderr: boolean;                     {update error char position}
 
 begin
-  upderr := false;                     {init to not update POS_ERR to new position}
-  if                                   {at the POS_ERR position now ?}
+  if                                   {at err char during err reparse ?}
+      syn.err and                      {in error reparse ?}
       (syn.parse_p^.pos.line_p = syn.pos_err.line_p) and
       (syn.parse_p^.pos.ind = syn.pos_err.ind)
       then begin
-    if syn.err
-      then begin                       {doing an error re-parse}
-        syn.err_end := true;           {indicate the error char has been reached}
-        syn_p_ichar := syn_ichar_inv_k; {return invalid character}
-        return;
-        end
-      else begin                       {doing normal parse}
-        upderr := true;                {update POS_ERR to new position after advance}
-        end
-      ;
-    end;                               {done with at POS_ERR position case}
+    syn.err_end := true;               {indicate the error char has been reached}
+    syn_p_ichar := syn_ichar_inv_k;    {return invalid character}
+    return;
+    end;
 {
 *   Return the character.
 }
+  upderr :=                            {need to update error position state ?}
+    (not syn.err) and                  {not in err reparse ?}
+    (syn.parse_p^.pos.line_p = syn.pos_errnext.line_p) and {at next char after err ?}
+    (syn.parse_p^.pos.ind = syn.pos_errnext.ind);
+  if upderr then begin                 {update error position state ?}
+    syn.pos_err := syn.parse_p^.pos;   {update pos of farthest returned char}
+    end;
+
   if syn.parse_p^.pos.line_p = nil
     then begin                         {at end of collection}
       syn_p_ichar := syn_ichar_eod_k;  {return end of data indication}
@@ -92,11 +93,12 @@ begin
           discard( fline_cpos_nextline(syn.parse_p^.pos) ); {advance to next line}
           end
         ;
-      if upderr then begin             {normal parse, update POS_ERR to new position ?}
-        syn.pos_err := syn.parse_p^.pos;
-        end;
       end
     ;
+
+  if upderr then begin                 {update error position state ?}
+    syn.pos_errnext := syn.parse_p^.pos; {save position immediately after err char}
+    end;
   end;
 {
 ********************************************************************************
@@ -154,6 +156,7 @@ procedure syn_p_constr_end (           {done parsing syntax construction, restor
   val_param;
 
 begin
+  if syn.err_end then return;          {leave state as is after hit err reparse end}
   syn_fparse_level_pop (syn, match);   {pop back to before start of this level}
   end;
 {
@@ -192,6 +195,7 @@ procedure syn_p_cpos_pop (             {pop input character position from parse 
   val_param;
 
 begin
+  if syn.err_end then return;          {leave state as is after hit err reparse end}
   syn_fparse_save_pop (syn, match);
   end;
 {
@@ -235,6 +239,7 @@ begin
   ftag_p := syn.parse_p^.frame_tag_p;  {point to frame for tag start}
   if ftag_p = nil then return;         {not within a tag ?}
   ftag_p^.tent_p^.tag_af := syn.parse_p^.pos; {save first pos after tag}
+  if syn.err_end then return;          {leave state as is after hit err reparse end}
 
   syn_fparse_tag_pop (syn, match);     {pop tag state from stack}
   end;
