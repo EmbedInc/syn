@@ -89,21 +89,21 @@
   .or .null[3]
 
 .define DEFINE .as
-  '.define' space symbol[1] space '.as' space expression[1]
+  '.define' space symbol[8] space '.as' space expression[9]
 
 .define DECLARE .as
   '.symbol' space
-  symbol[1] pad
+  symbol[5] pad
   .optional (
-    '[' symbol[1] ']'
-    .optional (space 'external'[2])
+    '[' symbol[6] ']'
+    .optional (space 'external'[7])
     )
 
 .define COMMAND .as
-  declare[1]
-  .or define[2]
+  declare[3]
+  .or define[4]
 
 .define toplev .as
   .charcase [lower]
-  .occurs[0 to inf] (pad command[1])
-  pad .EOD[2]
+  .occurs[0 to inf] (pad command)
+  pad .EOD

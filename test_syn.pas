@@ -209,6 +209,8 @@ done_opts:                             {done with all the command line options}
 {
 *   Read the input file into a FLINE collection.
 }
+  writeln ('Reading the input file into in-memory collection of lines.');
+
   fline_lib_new (                      {open the FLINE library}
     util_top_mem_context,              {parent memory context}
     fline_p,                           {returned pointer to new library use state}
@@ -221,11 +223,11 @@ done_opts:                             {done with all the command line options}
     coll_p,                            {returned pointer to the collection}
     stat);
   sys_error_abort (stat, '', '', nil, 0);
-
-  writeln ('Done reading "', coll_p^.name_p^.str:coll_p^.name_p^.len, '"');
 {
 *   Parse the input file to build the syntax tree.
 }
+  writeln ('Parsing, building the syntax tree.');
+
   syn_lib_new (                        {open the SYN library}
     util_top_mem_context,              {parent memory context}
     syn_p);                            {returned pointer to new library use state}
@@ -267,6 +269,8 @@ done_opts:                             {done with all the command line options}
 {
 *   Show the resulting syntax tree.
 }
+  writeln ('Traversing the syntax tree.');
+
   syn_trav_init (syn_p^);              {init for traversing the syntax tree}
   tabort := false;                     {init to not abort syntax tree processing}
   show_level;                          {show the current syntax tree level}

@@ -29,7 +29,7 @@
 const
   syn_subsys_k = -75;                  {SYN library subsystem ID}
   syn_names_nbuck_k = 64;              {number of buckets in syntax names symbol table}
-  syn_name_maxlen_k = 32;              {max name of a user-defined syntax construction}
+  syn_name_maxlen_k = 32;              {max name length of a user-defined syntax}
 {
 *   Special values that can be returned when a 0-255 character code is normally
 *   expected.
@@ -73,11 +73,11 @@ type
     case syn_ttype_k_t of
 syn_ttype_lev_k: (                     {start of a syntax level}
       level: sys_int_machine_t;        {nesting level, 0 at root}
-      lev_up_p: syn_tent_p_t;          {points to link to this level in parent level}
+      lev_up_p: syn_tent_p_t;          {points to SUB entry in parent level}
       lev_name_p: string_var_p_t;      {points to name of this level}
       );
 syn_ttype_sub_k: (                     {link to subordinate level}
-      sub_p: syn_tent_p_t;             {points to start of subordinate level}
+      sub_p: syn_tent_p_t;             {points to LEV entry for the subordinate level}
       );
 syn_ttype_tag_k: (                     {tagged item}
       tag: sys_int_machine_t;          {tag ID}
@@ -96,6 +96,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     frame_lev_p: syn_fparse_p_t;       {to frame of last level start}
     frame_save_p: syn_fparse_p_t;      {to frame of last explict save}
     frame_tag_p: syn_fparse_p_t;       {to frame of current tag start, if any}
+    tent_lev_p: syn_tent_p_t;          {to syn tree entry for start of current level}
     tent_p: syn_tent_p_t;              {to current syntax tree entry}
     pos: fline_cpos_t;                 {live input stream position}
     case: syn_charcase_k_t;            {live char case mode}
@@ -178,7 +179,7 @@ procedure syn_parse_err_reparse (      {reparse after error, builds tree up to e
 {
 ********************************************************************************
 *
-*   Low level routines for traversing the syntax tree.
+*   Routines for traversing the syntax tree.
 }
 function syn_trav_down (               {down into subordinate level from curr entry}
   in out  syn: syn_t)                  {SYN library use state}

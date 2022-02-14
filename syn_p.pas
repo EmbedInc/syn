@@ -126,14 +126,19 @@ begin
   vname.max := size_char(vname.str);   {init local var string}
   string_vstring (vname, name, namelen); {make var string name in VNAME}
   syn_names_get (syn, vname, name_p);  {get pointer to name in names table}
-
+{
+*   Create the SUB and LEV syntax tree entries for the new syntax level.
+}
   syn_tree_add_sub (                   {create the new level in the syntax tree}
     syn,                               {SYN library use state}
     syn.parse_p^.tent_p^,              {tree entry to append after}
     name_p,                            {pointer to name of this new level}
-    tlev_p);                           {returned pnt to tree ent starting new lev}
-
-  syn_fparse_level (syn, tlev_p);      {create temp state stack frame for new level}
+    tlev_p);                           {returned pointer to LEV tree entry}
+{
+*   Create the temp parsing stack entry for the start of the new syntax level.
+*   This entry will point to the LEV syntax tree entry.
+}
+  syn_fparse_level (syn, tlev_p);      {create parse stack frame, point to LEV}
   end;
 {
 ********************************************************************************

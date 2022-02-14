@@ -41,6 +41,7 @@ begin
   syn_names_init (syn);                {init syntax names symbol table to empty}
   syn_fparse_init (syn);               {init temp state stack for parsing}
   syn_tree_init (syn);                 {init syntax tree, empty, ready to add to}
+  syn.parse_p^.tent_lev_p := syn.sytree_p; {init tree entry for start of curr level}
   syn.parse_p^.tent_p := syn.sytree_p; {init curr tree entry to the first}
 
   syn.pos_err := syn.pos_start;        {init farthest character parsed to}
@@ -89,6 +90,7 @@ begin
 
   syn_fparse_init (syn);               {init temp state stack for parsing}
   syn_tree_init (syn);                 {init syntax tree, empty, ready to add to}
+  syn.parse_p^.tent_lev_p := syn.sytree_p; {init tree entry for start of curr level}
   syn.parse_p^.tent_p := syn.sytree_p; {init curr tree entry to the root entry}
   syn.err_end := false;                {init to not reached err reparse end}
 

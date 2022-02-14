@@ -751,7 +751,7 @@ begin
   match := syn_chsyn_space (syn);
   if not match then goto leave;
 
-  syn_p_tag_start (syn, 1);
+  syn_p_tag_start (syn, 5);
   match := syn_chsyn_symbol (syn);
   syn_p_tag_end (syn, match);
   if not match then goto leave;
@@ -764,7 +764,7 @@ begin
     match := syn_p_ichar(syn) = ord('[');
     if not match then exit;
 
-    syn_p_tag_start (syn, 1);
+    syn_p_tag_start (syn, 6);
     match := syn_chsyn_symbol (syn);
     syn_p_tag_end (syn, match);
     if not match then exit;
@@ -777,13 +777,14 @@ begin
       match := syn_chsyn_space (syn);
       if not match then exit;
 
-      syn_p_tag_start (syn, 2);
+      syn_p_tag_start (syn, 7);
       match := syn_p_test_string (syn, 'external', 8);
       syn_p_tag_end (syn, match);
       exit;
       end;
     if syn.err_end then return;
     syn_p_cpos_pop (syn, match);
+
     match := true;
     exit;
     end;
@@ -814,13 +815,13 @@ begin
   syn_chsyn_command := false;          {init to syntax did not match}
   syn_p_constr_start (syn, 'COMMAND', 7);
 
-  syn_p_tag_start (syn, 1);
+  syn_p_tag_start (syn, 3);
   match := syn_chsyn_declare (syn);
   if syn.err_end then return;
   syn_p_tag_end (syn, match);
   if match then goto leave;
 
-  syn_p_tag_start (syn, 2);
+  syn_p_tag_start (syn, 4);
   match := syn_chsyn_define (syn);
   if syn.err_end then return;
   syn_p_tag_end (syn, match);

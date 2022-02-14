@@ -156,22 +156,22 @@ procedure syn_tree_add_sub (           {add subordinate level to syntax tree}
   val_param;
 
 var
-  lnk_p: syn_tent_p_t;                 {to new entry that links to sub level}
+  sub_p: syn_tent_p_t;                 {to new entry that links to sub level}
 
 begin
-  syn_tree_ent_add (syn, lnk_p);       {create descriptor for the link entry}
+  syn_tree_ent_add (syn, sub_p);       {create descriptor for the link entry}
   syn_tree_ent_add (syn, lev_p);       {create descriptor for start of new level}
 
-  par.next_p := lnk_p;                 {link immediately follows parent entry}
+  par.next_p := sub_p;                 {link immediately follows parent entry}
 
-  lnk_p^.levst_p := par.levst_p;       {link is at same level as parent}
-  lnk_p^.ttype := syn_ttype_sub_k;     {this entry is link to subordinate level}
-  lnk_p^.sub_p := lev_p;               {point down to start of the new level}
+  sub_p^.levst_p := par.levst_p;       {link is at same level as parent}
+  sub_p^.ttype := syn_ttype_sub_k;     {this entry is link to subordinate level}
+  sub_p^.sub_p := lev_p;               {point down to start of the new level}
 
   lev_p^.levst_p := lev_p;             {this entry is the start of this level}
   lev_p^.ttype := syn_ttype_lev_k;     {this entry starts a level}
   lev_p^.level := par.levst_p^.level + 1; {depth this level is nested}
-  lev_p^.lev_up_p := lnk_p;            {point to link entry in parent level}
+  lev_p^.lev_up_p := sub_p;            {point to link entry in parent level}
   lev_p^.lev_name_p := name_p;         {point to name for this level}
   end;
 {

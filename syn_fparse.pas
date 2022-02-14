@@ -35,12 +35,31 @@ begin
   fr_p^.frame_lev_p := nil;            {no previous level start}
   fr_p^.frame_save_p := nil;           {no previous saved state}
   fr_p^.frame_tag_p := nil;            {not in a tag}
+  fr_p^.tent_lev_p := nil;             {no syntax tree entry for curr level start}
   fr_p^.tent_p := nil;                 {init to no curr syntax tree entry}
   fr_p^.pos := syn.pos_start;          {init input stream reading position}
   fr_p^.case := syn_charcase_asis_k;   {init to default char case interpretation}
   fr_p^.tagged := false;               {nothing tagged yet}
 
   syn.parse_p := fr_p;                 {set this frame as the current state}
+  end;
+{
+********************************************************************************
+*
+*   Local subroutine SYN_PARSE_FRAME_NEW (SYN, FR_P)
+*
+*   Create a new parsing stack frame.  The frame will be initialized to the
+*   current values.  FR_P is returned pointing to the new stack frame.  The new
+*   frame will not be made current.
+}
+procedure syn_parse_frame_new (        {create and init a new parse stack frame}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     fr_p: syn_fparse_p_t);       {returned pointer to new frame, not curr}
+  val_param; internal;
+
+begin
+  syn_stack_push (syn, sizeof(fr_p^), fr_p); {create the new stack frame}
+	fr_p^ := syn.parse_p^;	{init to copy of current stack frame}
   end;
 {
 ********************************************************************************
@@ -62,19 +81,15 @@ var
   fr_p: syn_fparse_p_t;                {pointer to the new stack frame}
 
 begin
-  syn_stack_push (syn, sizeof(fr_p^), fr_p); {create the new stack frame}
+  syn_parse_frame_new (syn, fr_p);     {create and init new stack frame}
 
   fr_p^.level := syn.parse_p^.level + 1; {nested one more level down}
-  fr_p^.prev_p := syn.parse_p;         {point back to previous stack frame}
   fr_p^.frame_lev_p := fr_p;           {this frame will be start of current level}
-  fr_p^.frame_save_p := syn.parse_p^.frame_save_p; {pointer to last explicit save}
-  fr_p^.frame_tag_p := syn.parse_p^.frame_tag_p; {pointer to tag start, if any}
-  fr_p^.tent_p := tlev_p;              {point to syn tree entry starting this level}
-  fr_p^.pos := syn.parse_p^.pos;       {init input stream parsing position}
-  fr_p^.case := syn.parse_p^.case;     {init current char case interpretation}
+  fr_p^.tent_lev_p := tlev_p;          {save pointer to syn tree entry for level start}
+  fr_p^.tent_p := tlev_p;              {set pointer to current syntax tree entry}
   fr_p^.tagged := false;               {nothing tagged yet this level}
 
-  syn.parse_p := fr_p;                 {the current state is now in this new frame}
+  syn.parse_p := fr_p;                 {switch to the new stack frame}
   end;
 {
 ********************************************************************************
@@ -92,19 +107,12 @@ var
   fr_p: syn_fparse_p_t;                {pointer to the new stack frame}
 
 begin
-  syn_stack_push (syn, sizeof(fr_p^), fr_p); {create the new stack frame}
+  syn_parse_frame_new (syn, fr_p);     {create and init new stack frame}
 
-  fr_p^.level := syn.parse_p^.level;   {staying within same nesting level}
-  fr_p^.prev_p := syn.parse_p;         {point back to previous stack frame}
-  fr_p^.frame_lev_p := syn.parse_p^.frame_lev_p; {to start of current level}
   fr_p^.frame_save_p := fr_p;          {this frame is now last explicit save}
-  fr_p^.frame_tag_p := syn.parse_p^.frame_tag_p; {pointer to tag start, if any}
-  fr_p^.tent_p := syn.parse_p^.tent_p; {init pointer to current syntax tree entry}
-  fr_p^.pos := syn.parse_p^.pos;       {init input stream parsing position}
-  fr_p^.case := syn.parse_p^.case;     {init current char case interpretation}
   fr_p^.tagged := false;               {nothing tagged yet since this save}
 
-  syn.parse_p := fr_p;                 {the current state is now in this new frame}
+  syn.parse_p := fr_p;                 {switch to the new stack frame}
   end;
 {
 ********************************************************************************
@@ -123,19 +131,13 @@ var
   fr_p: syn_fparse_p_t;                {pointer to the new stack frame}
 
 begin
-  syn_stack_push (syn, sizeof(fr_p^), fr_p); {create the new stack frame}
+  syn_parse_frame_new (syn, fr_p);     {create and init new stack frame}
 
-  fr_p^.level := syn.parse_p^.level;   {staying within same nesting level}
-  fr_p^.prev_p := syn.parse_p;         {point back to previous stack frame}
-  fr_p^.frame_lev_p := syn.parse_p^.frame_lev_p; {to start of current level}
-  fr_p^.frame_save_p := syn.parse_p^.frame_save_p; {to last explicit save}
   fr_p^.frame_tag_p := fr_p;           {this frame is the last tag start}
-  fr_p^.tent_p := ttag_p;              {pointer to the tag start syntax tree entry}
-  fr_p^.pos := syn.parse_p^.pos;       {init input stream parsing position}
-  fr_p^.case := syn.parse_p^.case;     {init current char case interpretation}
+  fr_p^.tent_p := ttag_p;              {make tag start syntax tree entry current}
   fr_p^.tagged := true;                {there is now a tag since start of level}
 
-  syn.parse_p := fr_p;                 {the current state is now in this new frame}
+  syn.parse_p := fr_p;                 {switch to the new stack frame}
   end;
 {
 ********************************************************************************
@@ -159,7 +161,7 @@ procedure syn_fparse_level_pop (       {pop curr syntax level from stack}
   val_param;
 
 var
-  lev_p: syn_fparse_p_t;               {points to start of current level}
+  lev_p: syn_fparse_p_t;               {points to frame for start of curr level}
   old_p: syn_fparse_p_t;               {points to previous frame before this level}
 
 begin
@@ -173,7 +175,7 @@ begin
       old_p^.pos := syn.parse_p^.pos;  {update to current input stream position}
       if syn.parse_p^.tagged
         then begin                     {tags created, keep the new level}
-          old_p^.tent_p := lev_p^.tent_p^.lev_up_p; {continue on after link}
+          old_p^.tent_p := lev_p^.tent_lev_p^.lev_up_p; {to SUB entry in parent level}
           old_p^.tagged := true;
           end
         else begin                     {not tags created, delete new tree entries}
