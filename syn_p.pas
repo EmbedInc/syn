@@ -243,7 +243,7 @@ var
 begin
   ftag_p := syn.parse_p^.frame_tag_p;  {point to frame for tag start}
   if ftag_p = nil then return;         {not within a tag ?}
-  ftag_p^.tent_p^.tag_af := syn.parse_p^.pos; {save first pos after tag}
+  ftag_p^.tent_def_p^.tag_af := syn.parse_p^.pos; {save first pos after tag}
   if syn.err_end then return;          {leave state as is after hit err reparse end}
 
   syn_fparse_tag_pop (syn, match);     {pop tag state from stack}

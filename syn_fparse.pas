@@ -60,6 +60,7 @@ procedure syn_parse_frame_new (        {create and init a new parse stack frame}
 begin
   syn_stack_push (syn, sizeof(fr_p^), fr_p); {create the new stack frame}
   fr_p^ := syn.parse_p^;               {init to copy of current stack frame}
+  fr_p^.prev_p := syn.parse_p;         {point back to previous parsing stack frame}
   fr_p^.tent_def_p := syn.parse_p^.tent_p; {save pointer to syn tree end at this time}
   end;
 {
@@ -181,12 +182,12 @@ begin
           old_p^.tagged := true;
           end
         else begin                     {not tags created, delete new tree entries}
-          syn_tree_trunc (syn, old_p^.tent_def_p^.back_p); {restore original syntax tree}
+          syn_tree_trunc (syn, old_p^.tent_def_p); {restore original syntax tree}
           end
         ;
       end
     else begin                         {completely restore to the old state}
-      syn_tree_trunc (syn, old_p^.tent_def_p^.back_p); {restore original syntax tree}
+      syn_tree_trunc (syn, old_p^.tent_def_p); {restore original syntax tree}
       end
     ;
 
@@ -234,6 +235,7 @@ begin
           end
         else begin
           syn_tree_trunc (syn, old_p^.tent_def_p); {restore original syntax tree}
+          old_p^.tent_p := old_p^.tent_def_p;
           end
         ;
       if old_p^.level = syn.parse_p^.level then begin {popping within same level ?}
@@ -243,6 +245,7 @@ begin
       end
     else begin                         {completely restore to the old state}
       syn_tree_trunc (syn, old_p^.tent_def_p); {restore original syntax tree}
+      old_p^.tent_p := old_p^.tent_def_p;
       end
     ;
 
@@ -271,12 +274,12 @@ procedure syn_fparse_tag_pop (         {pop tag from the stack}
 
 var
   tag_p: syn_fparse_p_t;               {points to frame after saved state}
-  old_p: syn_fparse_p_t;               {points to original state that was saved}
+  old_p: syn_fparse_p_t;               {points to original state before tag}
 
 begin
   tag_p := syn.parse_p^.frame_tag_p;   {point to frame to remove}
   if tag_p = nil then return;          {not in a tag ?}
-  old_p := tag_p^.prev_p;              {point to frame with saved state}
+  old_p := tag_p^.prev_p;              {point to frame for before tag}
   if old_p = nil then return;          {no previous frame (shouldn't happen) ?}
 
   if match
