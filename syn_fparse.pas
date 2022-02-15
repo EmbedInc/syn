@@ -39,7 +39,6 @@ begin
   fr_p^.tent_p := nil;                 {init to no curr syntax tree entry}
   fr_p^.pos := syn.pos_start;          {init input stream reading position}
   fr_p^.case := syn_charcase_asis_k;   {init to default char case interpretation}
-  fr_p^.tagged := false;               {nothing tagged yet}
 
   syn.parse_p := fr_p;                 {set this frame as the current state}
   end;
@@ -112,7 +111,6 @@ begin
   syn_parse_frame_new (syn, fr_p);     {create and init new stack frame}
 
   fr_p^.frame_save_p := fr_p;          {this frame is now last explicit save}
-  fr_p^.tagged := false;               {nothing tagged yet since this save}
 
   syn.parse_p := fr_p;                 {switch to the new stack frame}
   end;
@@ -182,12 +180,12 @@ begin
           old_p^.tagged := true;
           end
         else begin                     {not tags created, delete new tree entries}
-          syn_tree_trunc (syn, old_p^.tent_def_p); {restore original syntax tree}
+          syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
           end
         ;
       end
     else begin                         {completely restore to the old state}
-      syn_tree_trunc (syn, old_p^.tent_def_p); {restore original syntax tree}
+      syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
       end
     ;
 
@@ -234,8 +232,7 @@ begin
           old_p^.tent_p := syn.parse_p^.tent_p; {continue with existing syntax tree}
           end
         else begin
-          syn_tree_trunc (syn, old_p^.tent_def_p); {restore original syntax tree}
-          old_p^.tent_p := old_p^.tent_def_p;
+          syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
           end
         ;
       if old_p^.level = syn.parse_p^.level then begin {popping within same level ?}
@@ -244,8 +241,7 @@ begin
       old_p^.tagged := old_p^.tagged or syn.parse_p^.tagged; {update tagged state}
       end
     else begin                         {completely restore to the old state}
-      syn_tree_trunc (syn, old_p^.tent_def_p); {restore original syntax tree}
-      old_p^.tent_p := old_p^.tent_def_p;
+      syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
       end
     ;
 
@@ -289,7 +285,7 @@ begin
       if old_p^.level = syn.parse_p^.level then begin {popping within same level ?}
         old_p^.case := syn.parse_p^.case; {update to current char case interpretation}
         end;
-      old_p^.tent_p := tag_p^.tent_def_p; {continue syntax tree after tag}
+      old_p^.tent_p := syn.parse_p^.tent_p; {continue with curr syntax tree pos}
       end
     else begin                         {completely restore to the old state}
       old_p^.tent_p := old_p^.tent_def_p; {restore original syntax tree}

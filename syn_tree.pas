@@ -70,8 +70,6 @@ begin
 *   Create a new syntax tree entry.  ENT_P will be returned pointing to the new
 *   entry.  Only the following fields will be filled in or initialized:
 *
-*     BACK_P  -  Used for memory management, not content for syntax tree.
-*
 *     NEXT_P  -  Initialized to NIL as a convenience.
 *
 *   All other fields are uninitialized.
@@ -84,7 +82,6 @@ procedure syn_tree_ent_add (           {make new syntax tree entry after curr}
 begin
   syn_tree_ent_alloc (syn, ent_p);     {allocate memory for the descriptor}
 
-  ent_p^.back_p := syn.sytree_last_p;  {point back to last-created entry}
   syn.sytree_last_p := ent_p;          {new entry is now the last-created}
   ent_p^.next_p := nil;                {init to no following entry at this level}
   end;
@@ -110,6 +107,7 @@ begin
     syn.mem_p^, syn.mem_tree_p);
 
   syn_tree_ent_add (syn, ent_p);       {create the root entry}
+  ent_p^.back_p := nil;                {there is no previous entry}
   ent_p^.levst_p := ent_p;             {this entry starts this level}
   ent_p^.ttype := syn_ttype_lev_k;     {this entry starts a syntax level}
   ent_p^.level := 0;                   {nesting level}
@@ -160,7 +158,9 @@ var
 
 begin
   syn_tree_ent_add (syn, sub_p);       {create descriptor for the link entry}
+  sub_p^.back_p := addr(par);          {point back to previous entry}
   syn_tree_ent_add (syn, lev_p);       {create descriptor for start of new level}
+  lev_p^.back_p := sub_p;              {point back to parent entry}
 
   par.next_p := sub_p;                 {link immediately follows parent entry}
 
@@ -195,6 +195,7 @@ procedure syn_tree_add_tag (           {add syntax tree entry for tagged item}
 
 begin
   syn_tree_ent_add (syn, tag_p);       {create descriptor for the new tree entry}
+  tag_p^.back_p := addr(par);          {point back to previous entry}
   par.next_p := tag_p;                 {link to from parent tree entry}
 
   tag_p^.levst_p := par.levst_p;       {point to entry for start of this level}
@@ -221,6 +222,7 @@ procedure syn_tree_add_err (           {add error end of syntax entry to syn tre
 
 begin
   syn_tree_ent_add (syn, err_p);       {create descriptor for the new tree entry}
+  err_p^.back_p := addr(par);          {point back to previous entry}
   par.next_p := err_p;                 {link to from parent tree entry}
 
   err_p^.levst_p := par.levst_p;       {point to entry for start of this level}

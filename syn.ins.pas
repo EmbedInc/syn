@@ -66,7 +66,7 @@ type
 
   syn_tent_p_t = ^syn_tent_t;
   syn_tent_t = record                  {one syntax tree entry}
-    back_p: syn_tent_p_t;              {pointer to previously-created entry}
+    back_p: syn_tent_p_t;              {pointer to previous or parent tree entry}
     next_p: syn_tent_p_t;              {to next entry this level, NIL at end of level}
     levst_p: syn_tent_p_t;             {points to starting entry for this level}
     ttype: syn_ttype_k_t;              {what kind of entry this is}
