@@ -132,14 +132,14 @@ syn_tent_tag_k: begin                  {tagged source string}
       syn_trav_tag_start (syn_p^, cpos); {get tagged string start position}
       syn_trav_tag_string (syn_p^, tagstr); {get tagged string}
       indent (level);
-      write ('Tag ', tagid, ' ');
+      write ('Tag ', tagid, ', ');
       if cpos.line_p = nil
         then begin
           writeln ('EOD');
           end
         else begin
-          writeln ('ine ', cpos.line_p^.lnum, ' col ', cpos.ind,
-            '  "', tagstr.str:tagstr.len, '"');
+          writeln ('line ', cpos.line_p^.lnum, ' col ', cpos.ind,
+            ' "', tagstr.str:tagstr.len, '"');
           end
         ;
       end;

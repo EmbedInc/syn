@@ -96,7 +96,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     frame_lev_p: syn_fparse_p_t;       {to frame of last level start}
     frame_save_p: syn_fparse_p_t;      {to frame of last explict save}
     frame_tag_p: syn_fparse_p_t;       {to frame of current tag start, if any}
-    tent_lev_p: syn_tent_p_t;          {to syn tree entry for start of current level}
+    tent_def_p: syn_tent_p_t;          {to curr syn tree entry when frame created}
     tent_p: syn_tent_p_t;              {to current syntax tree entry}
     pos: fline_cpos_t;                 {live input stream position}
     case: syn_charcase_k_t;            {live char case mode}
