@@ -35,11 +35,11 @@ begin
   syn_p^.mem_p := mem_p;
   syn_p^.mem_tree_p := nil;
   syn_p^.sytree_p := nil;
-  syn_p^.sytree_last_p := nil;
   syn_p^.names := false;
   syn_p^.stack_exist := false;
 
-  syn_p^.tent_unused_p := nil;
+  syn_p^.tent_free_p := nil;
+  syn_p^.tent_free_last_p := nil;
   syn_p^.pos_start.line_p := nil;
   syn_p^.pos_start.ind := 0;
   syn_p^.pos_err.line_p := nil;

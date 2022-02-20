@@ -114,7 +114,6 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     mem_p: util_mem_context_p_t;       {pointer to private memory context}
     mem_tree_p: util_mem_context_p_t;  {points to private mem for syntax tree}
     sytree_p: syn_tent_p_t;            {points to first syntax tree entry}
-    sytree_last_p: syn_tent_p_t;       {points to last-created syntax tree entry}
     nametab: string_hash_handle_t;     {table of syntax construction names}
     names: boolean;                    {NAMETAB has been created}
     stack: util_stack_handle_t;        {temp stacked state when parsing and traversing}
@@ -122,7 +121,8 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     {
     *   State used when parsing the input stream.
     }
-    tent_unused_p: syn_tent_p_t;       {points to chain of unused syn tree entries}
+    tent_free_p: syn_tent_p_t;         {points to first unused syn tree entry}
+    tent_free_last_p: syn_tent_p_t;    {points to last unused syn tree entry}
     pos_start: fline_cpos_t;           {starting position of current parse}
     pos_err: fline_cpos_t;             {farthest parsing position char returned for}
     pos_errnext: fline_cpos_t;         {parsing position after returning at POS_ERR}

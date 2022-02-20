@@ -117,5 +117,5 @@ procedure syn_tree_init (              {init syntax tree, empty, ready for use}
 
 procedure syn_tree_trunc (             {truncate tree past specific entry}
   in out  syn: syn_t;                  {SYN library use state}
-  in      ent_p: syn_tent_p_t);        {last entry to keep, delete all after}
+  in out  ent: syn_tent_t);            {last entry to keep, delete all after}
   val_param; extern;

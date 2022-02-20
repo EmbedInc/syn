@@ -335,26 +335,26 @@ begin
   syn_p_cpos_pop (syn, match);
   if match then goto leave;
 {
-*   EOL
+*   .EOL
 }
   syn_p_tag_start (syn, 1);
-  match := syn_p_test_eol (syn);
+  match := syn_p_test_string (syn, '.eol', 4);
   syn_p_tag_end (syn, match);
   if syn.err_end then return;
   if match then goto leave;
 {
-*   EOF
+*   .EOF
 }
   syn_p_tag_start (syn, 2);
-  match := syn_p_test_eof (syn);
+  match := syn_p_test_string (syn, '.eof', 4);
   syn_p_tag_end (syn, match);
   if syn.err_end then return;
   if match then goto leave;
 {
-*   EOD
+*   .EOD
 }
   syn_p_tag_start (syn, 12);
-  match := syn_p_test_eod (syn);
+  match := syn_p_test_string (syn, '.eod', 4);
   syn_p_tag_end (syn, match);
   if syn.err_end then return;
   if match then goto leave;
@@ -504,6 +504,7 @@ begin
     syn_p_tag_start (syn, 10);
     match := syn_p_test_string (syn, '.upto', 5);
     syn_p_tag_end (syn, match);
+    if not match then exit;
 
     match := syn_chsyn_pad (syn);
     if not match then exit;
@@ -520,6 +521,7 @@ begin
     syn_p_tag_start (syn, 11);
     match := syn_p_test_string (syn, '.not', 4);
     syn_p_tag_end (syn, match);
+    if not match then exit;
 
     match := syn_chsyn_pad (syn);
     if not match then exit;
@@ -704,7 +706,7 @@ begin
   match := syn_chsyn_space (syn);
   if not match then goto leave;
 
-  syn_p_tag_start (syn, 1);
+  syn_p_tag_start (syn, 8);
   match := syn_chsyn_symbol (syn);
   syn_p_tag_end (syn, match);
   if not match then goto leave;
@@ -718,7 +720,7 @@ begin
   match := syn_chsyn_space (syn);
   if not match then goto leave;
 
-  syn_p_tag_start (syn, 1);
+  syn_p_tag_start (syn, 9);
   match := syn_chsyn_expression (syn);
   syn_p_tag_end (syn, match);
 

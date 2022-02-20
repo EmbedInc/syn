@@ -180,12 +180,12 @@ begin
           old_p^.tagged := true;
           end
         else begin                     {not tags created, delete new tree entries}
-          syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
+          syn_tree_trunc (syn, old_p^.tent_p^); {restore original syntax tree}
           end
         ;
       end
     else begin                         {completely restore to the old state}
-      syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
+      syn_tree_trunc (syn, old_p^.tent_p^); {restore original syntax tree}
       end
     ;
 
@@ -232,7 +232,7 @@ begin
           old_p^.tent_p := syn.parse_p^.tent_p; {continue with existing syntax tree}
           end
         else begin
-          syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
+          syn_tree_trunc (syn, old_p^.tent_p^); {restore original syntax tree}
           end
         ;
       if old_p^.level = syn.parse_p^.level then begin {popping within same level ?}
@@ -241,7 +241,7 @@ begin
       old_p^.tagged := old_p^.tagged or syn.parse_p^.tagged; {update tagged state}
       end
     else begin                         {completely restore to the old state}
-      syn_tree_trunc (syn, old_p^.tent_p); {restore original syntax tree}
+      syn_tree_trunc (syn, old_p^.tent_p^); {restore original syntax tree}
       end
     ;
 
@@ -289,7 +289,7 @@ begin
       end
     else begin                         {completely restore to the old state}
       old_p^.tent_p := old_p^.tent_def_p; {restore original syntax tree}
-      syn_tree_trunc (syn, old_p^.tent_def_p);
+      syn_tree_trunc (syn, old_p^.tent_def_p^);
       end
     ;
 

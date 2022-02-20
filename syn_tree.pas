@@ -18,6 +18,7 @@ define syn_tree_trunc;
 *
 *   New memory is only actually allocated when a previously-allocated but unused
 *   descriptor is not available.  Otherwise, unused descriptors are re-used.
+*   Entries are re-used in the order they are chained onto the free list.
 }
 procedure syn_tree_ent_alloc (         {allocate new syntax tree entry descriptor}
   in out  syn: syn_t;                  {SYN library use state}
@@ -25,7 +26,7 @@ procedure syn_tree_ent_alloc (         {allocate new syntax tree entry descripto
   val_param; internal;
 
 begin
-  if syn.tent_unused_p = nil
+  if syn.tent_free_p = nil
     then begin                         {no unused entry available, create new}
       util_mem_grab (                  {allocate memory for the new entry}
         sizeof(ent_p^),                {amount of memory to allocate}
@@ -34,8 +35,11 @@ begin
         ent_p);                        {returned pointer to the new memory}
       end
     else begin                         {grab an unused entry}
-      ent_p := syn.tent_unused_p;      {get pointer to first unused entry}
-      syn.tent_unused_p := ent_p^.next_p; {update pointer to next unused entry}
+      ent_p := syn.tent_free_p;        {get pointer to first unused entry}
+      syn.tent_free_p := ent_p^.next_p; {update pointer to next unused entry}
+      if syn.tent_free_p = nil then begin {unused entries list is now empty ?}
+        syn.tent_free_last_p := nil;
+        end;
       end
     ;
   end;
@@ -48,9 +52,16 @@ begin
 *   ENT_P is returned NIL.
 *
 *   Unused syntax tree entries are not actually deallocated.  Instead, they are
-*   placed on the unused list.  When a new entry is required, it is taken from
-*   the unused list when possible.  New memory is only allocated when there are
-*   no unused entries to re-use.
+*   placed on the free entries list.  When a new entry is required, it is taken
+*   from the free list when possible.  New memory is only allocated when there
+*   are no unused entries to re-use.
+*
+*   New entries are added to the end of the free list.  Since entries are
+*   usually deallocated in tree order, this leaves the oldest entry at the start
+*   of the list.  This oldest entry will be re-used first.  The purpose of this
+*   is to possibly have a slight benefit in use of dynamic memory.  If a deep
+*   tree is temporarily created, the "far" entries won't be immediately re-used.
+*   The more heavily accessed earlier entries will be re-used first.
 }
 procedure syn_tree_ent_dealloc (       {deallocate syntax tree entry descriptor}
   in out  syn: syn_t;                  {SYN library use state}
@@ -58,8 +69,18 @@ procedure syn_tree_ent_dealloc (       {deallocate syntax tree entry descriptor}
   val_param; internal;
 
 begin
-  ent_p^.next_p := syn.tent_unused_p;  {link to start of unused list}
-  syn.tent_unused_p := ent_p;
+  ent_p^.next_p := nil;                {no following entry, will be at end of list}
+
+  if syn.tent_free_last_p = nil
+    then begin                         {this will be first free list entry}
+      syn.tent_free_p := ent_p;
+      end
+    else begin                         {link to end of existing free list}
+      syn.tent_free_last_p^.next_p := ent_p;
+      end
+    ;
+
+  syn.tent_free_last_p := ent_p;       {update pointer to last entry in list}
   ent_p := nil;                        {pointer to this entry is no longer valid}
   end;
 {
@@ -81,8 +102,6 @@ procedure syn_tree_ent_add (           {make new syntax tree entry after curr}
 
 begin
   syn_tree_ent_alloc (syn, ent_p);     {allocate memory for the descriptor}
-
-  syn.sytree_last_p := ent_p;          {new entry is now the last-created}
   ent_p^.next_p := nil;                {init to no following entry at this level}
   end;
 {
@@ -134,8 +153,8 @@ begin
     end;
 
   syn.sytree_p := nil;                 {there is no syntax tree entry}
-  syn.sytree_last_p := nil;
-  syn.tent_unused_p := nil;            {there is no chain of unused entries}
+  syn.tent_free_p := nil;              {there is no chain of unused entries}
+  syn.tent_free_last_p := nil;
   end;
 {
 ********************************************************************************
@@ -232,52 +251,32 @@ begin
 {
 ********************************************************************************
 *
-*   Local subroutine SYN_TREE_ENT_DEL_LAST (SYN)
+*   Subroutine SYN_TREE_TRUNC (SYN, ENT)
 *
-*   Delete the most recently created entry from the syntax tree.  The entry is
-*   removed and the tree state updated.
-}
-procedure syn_tree_ent_del_last (      {delete last-created syntax tree entry}
-  in out  syn: syn_t);                 {SYN library use state}
-  val_param; internal;
-
-var
-  ent_p: syn_tent_p_t;                 {pointer to entry to delete}
-
-begin
-  ent_p := syn.sytree_last_p;          {get pointer to the entry to delete}
-  if ent_p = nil then return;          {no entry to delete, nothing to do ?}
-
-  syn.sytree_last_p := ent_p^.back_p;  {update pointer to new last entry}
-  if syn.sytree_last_p = nil
-    then begin                         {the tree is now empty}
-      syn.sytree_p := nil;
-      end
-    else begin                         {there is still at least one entry}
-      syn.sytree_last_p^.next_p := nil; {remove forward pointer to deleted entry}
-      end
-    ;
-
-  syn_tree_ent_dealloc (syn, ent_p);   {deallocate this entry descriptor}
-  end;
-{
-********************************************************************************
-*
-*   Subroutine SYN_TREE_TRUNC (SYN, ENT_P)
-*
-*   Truncate the syntax tree so that ENT_P points to the last-created entry.
-*   All entries created after that pointed to by ENT_P will be removed.
+*   Truncate the syntax tree so that there are no entries following ENT at the
+*   same level.
 }
 procedure syn_tree_trunc (             {truncate tree past specific entry}
   in out  syn: syn_t;                  {SYN library use state}
-  in      ent_p: syn_tent_p_t);        {last entry to keep, delete all after}
+  in out  ent: syn_tent_t);            {last entry to keep, delete all after}
   val_param;
 
-begin
-  if ent_p = nil then return;          {nothing to delete ?}
+var
+  next_p: syn_tent_p_t;                {pointer to next entry to delete}
+  del_p: syn_tent_p_t;                 {pointer to current entry to delete}
 
-  while syn.sytree_last_p <> ent_p do begin {loop until ENT_P points to last entry}
-    if syn.sytree_last_p = nil then return; {didn't find entry, internal error ?}
-    syn_tree_ent_del_last (syn);       {delete the last entry}
-    end;                               {back to check the new last entry}
+begin
+  del_p := ent.next_p;                 {init pointer to first entry to delete}
+  while del_p <> nil do begin          {loop over chain of entries}
+    case del_p^.ttype of               {what kind of entry is this ?}
+syn_ttype_sub_k: begin                 {this entry points to subordinate level}
+        syn_tree_trunc (syn, del_p^.sub_p^); {dealloc sub level}
+        syn_tree_ent_dealloc (syn, del_p^.sub_p) ; {dealloc LEV entry}
+        end;
+      end;
+    next_p := del_p^.next_p;           {save pointer to next entry to delete}
+    syn_tree_ent_dealloc (syn, del_p); {deallocate this entry}
+    del_p := next_p;                   {update pointer to new entry to delete}
+    end;                               {back to delete this new entry}
+  ent.next_p := nil;                   {there are now no following entries}
   end;
