@@ -86,7 +86,16 @@ begin
     else begin                         {still within the collection}
       if fline_char (syn.parse_p^.pos, ch)
         then begin                     {got a character normally}
-          syn_p_ichar := ord(ch);      {return the character code}
+          case syn.parse_p^.case of    {how to handle character case ?}
+syn_charcase_down_k: begin             {convert to lower case}
+              syn_p_ichar := ord(string_downcase_char(ch));
+              end;
+syn_charcase_up_k: begin               {convert to upper case}
+              syn_p_ichar := ord(string_upcase_char(ch));
+              end;
+otherwise
+            syn_p_ichar := ord(ch);    {leave character case as is}
+            end;                       {end of character case handling cases}
           end
         else begin                     {hit end of the current line}
           syn_p_ichar := syn_ichar_eol_k; {return end of line indication}
