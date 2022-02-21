@@ -72,7 +72,6 @@ function syn_chsyn_space (
   val_param; internal;
 
 var
-  spos: fline_cpos_t;                  {saved input stream position}
   match: boolean;                      {syntax matched}
 
 label
@@ -81,7 +80,7 @@ label
 begin
   syn_chsyn_space := false;            {init to syntax did not match}
 
-  spos := syn.parse_p^.pos;            {save original input stream position}
+  syn_p_cpos_push (syn);               {save position before first char}
   case syn_p_ichar(syn) of             {what character is it ?}
 ord(' '),
 syn_ichar_eol_k: begin
@@ -91,14 +90,13 @@ otherwise
     match := false;
     end;
   if syn.err_end then return;          {end of error re-parse ?}
+  syn_p_cpos_pop (syn, match);
+  if not match then goto leave;
 
   match := syn_chsyn_pad (syn);
 
 leave:
   if syn.err_end then return;
-  if not match then begin
-    syn.parse_p^.pos := spos;
-    end;
   syn_chsyn_space := match;
   end;
 {
