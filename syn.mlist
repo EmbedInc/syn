@@ -1,3 +1,4 @@
+syn_dbg.obj
 syn_chsyn.obj
 syn_fparse.obj
 syn_lib.obj

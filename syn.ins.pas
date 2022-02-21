@@ -277,6 +277,10 @@ function syn_trav_up (                 {pop up to parent syntax tree level}
 *   The input stream position has been returned to what it was when the routine
 *   was called, and the syntax tree has not changed.
 }
+procedure syn_dbg_tree (               {show syntax tree on STDOUT, for debugging}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
 procedure syn_p_charcase (             {set charcase handling, restored at constr end}
   in out  syn: syn_t;                  {SYN library use state}
   in      ccase: syn_charcase_k_t);    {the new input stream character case handling}

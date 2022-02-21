@@ -178,6 +178,7 @@ function syn_chsyn_string (
 
 var
   match: boolean;                      {syntax matched}
+  spos: fline_cpos_t;                  {saved input stream position}
   ichar: sys_int_machine_t;            {character code}
   iq: sys_int_machine_t;               {quote character code}
 
@@ -185,7 +186,7 @@ label
   leave;
 
 begin
-  syn_chsyn_string := false;           {init to syntax did not match}
+  syn_chsyn_string := false;           {set return state for aborting}
   match := false;
   syn_p_constr_start (syn, 'STRING', 6); {start this construction}
 
@@ -194,21 +195,26 @@ begin
   if (iq <> ord('"')) and (iq <> ord('''')) {invalid quote start ?}
     then goto leave;
 
+  match := true;                       {init to syntax matched}
   syn_p_tag_start (syn, 1);            {start tagged input string}
-  while true do begin                  {loop over the string content chars}
+  while true do begin                  {back here each new string character}
+    spos := syn.parse_p^.pos;          {save position before this character}
     ichar := syn_p_ichar (syn);        {get this char}
     if syn.err_end then return;        {end of error re-parse ?}
-    if ichar = iq then begin           {this char is end quote ?}
-      match := true;
-      exit;
-      end;
+    if ichar = iq then exit;           {hit closing quote character ?}
     if (ichar < ord(' ')) or (ichar > ord('~')) then begin {bad char ?}
+      match := false;                  {indicate syntax does not match}
       exit;
       end;
     end;                               {this char is string body, back for next}
-  syn_p_tag_end (syn, match);          {end the string body tag}
 
-leave:
+  syn.parse_p^.pos := spos;            {go back to before the ending quote}
+  syn_p_tag_end (syn, match);          {end the tag for the string content}
+  if match then begin                  {there was a valid ending quote}
+    discard( syn_p_ichar(syn) );       {consume the ending quote}
+    end;
+
+leave:                                 {end syntax construction and return}
   syn_p_constr_end (syn, match);
   syn_chsyn_string := match;
   end;
@@ -598,6 +604,7 @@ begin
   match := syn_chsyn_untagged_item (syn);
   if not match then goto leave;
 
+  syn_p_cpos_push (syn);               {save position before optional tag}
   while true do begin
     match := syn_p_ichar(syn) = ord('[');
     if not match then exit;
@@ -611,6 +618,7 @@ begin
     exit;
     end;
   if syn.err_end then return;
+  syn_p_cpos_pop (syn, match);         {restore pos if no tag found}
   if match then goto leave;
 
   syn_p_tag_start (syn, 2);
