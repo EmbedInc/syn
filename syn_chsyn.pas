@@ -481,12 +481,12 @@ begin
       syn_p_tag_start (syn, 1);
       match := syn_p_test_string (syn, 'upper', 5);
       syn_p_tag_end (syn, match);
-      if not match then exit;
+      if match then exit;
 
       syn_p_tag_start (syn, 2);
       match := syn_p_test_string (syn, 'lower', 5);
       syn_p_tag_end (syn, match);
-      if not match then exit;
+      if match then exit;
 
       syn_p_tag_start (syn, 3);
       match := syn_p_test_string (syn, 'off', 3);
