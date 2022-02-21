@@ -56,9 +56,15 @@ procedure indent (                     {indent new line according to nesting lev
   in      level: sys_int_machine_t);   {0-N level below top}
   val_param; internal;
 
+var
+  ii: sys_int_machine_t;               {loop counter}
+
 begin
   if level <= 0 then return;           {don't indent at all ?}
-  write (' ':(level*2));
+  write ('  ');                        {indent the first level}
+  for ii := 2 to level do begin        {once for each remaining level}
+    write ('. ');
+    end;
   end;
 {
 ********************************************************************************
