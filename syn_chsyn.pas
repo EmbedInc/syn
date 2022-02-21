@@ -113,6 +113,7 @@ var
   n: sys_int_machine_t;                {number of characters}
   ichar: sys_int_machine_t;            {character code}
   match: boolean;                      {syntax matched}
+  spos: fline_cpos_t;                  {saved input stream position}
 
 begin
   syn_chsyn_integer := false;          {init to syntax did not match}
@@ -121,12 +122,14 @@ begin
 
   n := 0;                              {init number of matching chars found}
   while true do begin
+    spos := syn.parse_p^.pos;          {save position before reading this char}
     ichar := syn_p_ichar (syn);        {get this input character}
     if syn.err_end then return;        {end of error re-parse ?}
     if (ichar < ord('0')) or (ichar > ord('9')) {hit first non-matching char ?}
       then exit;
     n := n + 1;                        {count one more matching character}
     end;                               {this char matches, back to try next}
+  syn.parse_p^.pos := spos;            {restore to first non-matching char}
 
   match := n > 0;                      {syntax matched if 1 or more digits}
   syn_p_constr_end (syn, match);
