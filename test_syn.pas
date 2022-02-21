@@ -25,6 +25,7 @@ var
   cpos: fline_cpos_t;                  {character position within input lines}
   line_p: string_var_p_t;              {pointer to source line}
   tabort: boolean;                     {abort processing syntax tree}
+  nent: sys_int_machine_t;             {number of syntax tree entries found}
 
   opt:                                 {upcased command line option}
     %include '(cog)lib/string_treename.ins.pas';
@@ -107,6 +108,9 @@ begin
 loop_ent:                              {back here to get each new entry}
   if tabort then return;               {tree traversal already aborted ?}
   tent := syn_trav_next (syn_p^);      {to next entry, get its type ID}
+  if tent <> syn_tent_end_k then begin
+    nent := nent + 1;                  {count one more syntax tree entry}
+    end;
   case tent of                         {what type of entry is this ?}
 syn_tent_err_k: begin                  {error end of syntax tree}
       indent (level);
@@ -136,6 +140,7 @@ syn_tent_sub_k: begin                  {subordinate level}
         tabort := true;
         return;
         end;
+      nent := nent + 1;                {count one more syntax tree entry}
       show_level;                      {show the subordinate level}
       end;
 syn_tent_tag_k: begin                  {tagged source string}
@@ -284,7 +289,17 @@ done_opts:                             {done with all the command line options}
 
   syn_trav_init (syn_p^);              {init for traversing the syntax tree}
   tabort := false;                     {init to not abort syntax tree processing}
+  nent := 1;                           {init number of syntax tree entries}
   show_level;                          {show the current syntax tree level}
+
+  writeln;
+  string_f_fp_eng (                    {make amount of memory used string}
+    parm,                              {output string}
+    nent * sizeof(syn_tent_t),         {bytes used by syntax tree entries}
+    3,                                 {required significant digits}
+    opt);                              {returned units factor of 1000 prefix}
+  writeln (nent, ' syntax tree entries found, ',
+    parm.str:parm.len, ' ', opt.str:opt.len, 'bytes');
 {
 *   Clean up and leave.
 }
