@@ -89,8 +89,14 @@ begin
   level := syn_trav_level (syn_p^);    {get nesting level here}
   syn_trav_level_name (syn_p^, name);  {get the name of this level}
 
-  indent (level);
-  writeln ('Level ', level, ', name "', name.str:name.len, '"');
+  if level = 0
+    then begin
+      writeln ('level 0');
+      end
+    else begin
+      writeln (name.str:name.len, ', level ', level);
+      end
+    ;
 
 loop_ent:                              {back here to get each new entry}
   if tabort then return;               {tree traversal already aborted ?}
@@ -118,7 +124,6 @@ syn_tent_end_k: begin                  {normal end of this level}
       end;
 syn_tent_sub_k: begin                  {subordinate level}
       indent (level);
-      writeln ('Subordinate level');
       if not syn_trav_down (syn_p^) then begin {failed to go down to sub level ?}
         indent (level);
         writeln ('Failed to enter sub level');
