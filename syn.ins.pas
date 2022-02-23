@@ -297,6 +297,11 @@ procedure syn_p_constr_start (         {starting to parse a new syntax construct
   in      namelen: sys_int_machine_t); {number of characters in NAME}
   val_param; extern;
 
+procedure syn_p_cpos_get (             {get the current parsing character position}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     pos: fline_cpos_t);          {returned pasing position}
+  val_param; extern;
+
 procedure syn_p_cpos_pop (             {pop input character position from parse stack}
   in out  syn: syn_t;                  {SYN library use state}
   in      match: boolean);             {syntax matched, continue at curr input position}
@@ -304,6 +309,11 @@ procedure syn_p_cpos_pop (             {pop input character position from parse 
 
 procedure syn_p_cpos_push (            {push input character position onto parse stack}
   in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_p_cpos_set (             {set the current parsing character position}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      pos: fline_cpos_t);          {character position to go to}
   val_param; extern;
 
 function syn_p_ichar (                 {get next input char code, charcase applied}

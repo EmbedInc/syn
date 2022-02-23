@@ -12,6 +12,8 @@ define syn_p_constr_start;
 define syn_p_constr_end;
 define syn_p_cpos_push;
 define syn_p_cpos_pop;
+define syn_p_cpos_get;
+define syn_p_cpos_set;
 define syn_p_tag_start;
 define syn_p_tag_end;
 define syn_p_test_eol;
@@ -211,6 +213,38 @@ procedure syn_p_cpos_pop (             {pop input character position from parse 
 begin
   if syn.err_end then return;          {leave state as is after hit err reparse end}
   syn_fparse_save_pop (syn, match);
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_P_CPOS_GET (SYN, POS)
+*
+*   Get the current parsing character position into POS.  No parsing state is
+*   altered.
+}
+procedure syn_p_cpos_get (             {get the current parsing character position}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     pos: fline_cpos_t);          {returned pasing position}
+  val_param;
+
+begin
+  pos := syn.parse_p^.pos;
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_P_CPOS_SET (SYN, POS)
+*
+*   Set the current parsing position to POS.  The next character returned by
+*   SYN_P_ICHAR will be the character at POS.
+}
+procedure syn_p_cpos_set (             {set the current parsing character position}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      pos: fline_cpos_t);          {character position to go to}
+  val_param;
+
+begin
+  syn.parse_p^.pos := pos;
   end;
 {
 ********************************************************************************

@@ -48,7 +48,7 @@ begin
   syn_chsyn_pad := false;
 
   while true do begin                  {back here to try each new character}
-    spos := syn.parse_p^.pos;          {save position before this character}
+    syn_p_cpos_get (syn, spos);        {save parsing position before this char}
     case syn_p_ichar(syn) of           {what character is this ?}
 ord(' '),
 syn_ichar_eol_k,
@@ -60,7 +60,7 @@ otherwise
 
 done:
   if syn.err_end then return;          {end of error re-parse ?}
-  syn.parse_p^.pos := spos;            {back to first char that didn't match}
+  syn_p_cpos_set (syn, spos);          {back to first char that didn't match}
   syn_chsyn_pad := true;               {always matches}
   end;
 {
@@ -120,14 +120,14 @@ begin
 
   n := 0;                              {init number of matching chars found}
   while true do begin
-    spos := syn.parse_p^.pos;          {save position before reading this char}
+    syn_p_cpos_get (syn, spos);        {save position before reading this char}
     ichar := syn_p_ichar (syn);        {get this input character}
     if syn.err_end then return;        {end of error re-parse ?}
     if (ichar < ord('0')) or (ichar > ord('9')) {hit first non-matching char ?}
       then exit;
     n := n + 1;                        {count one more matching character}
     end;                               {this char matches, back to try next}
-  syn.parse_p^.pos := spos;            {restore to first non-matching char}
+  syn_p_cpos_set (syn, spos);          {restore to first non-matching char}
 
   match := n > 0;                      {syntax matched if 1 or more digits}
   syn_p_constr_end (syn, match);
@@ -153,7 +153,7 @@ begin
 
   n := 0;                              {init number of matching chars found}
   while true do begin
-    spos := syn.parse_p^.pos;          {save position before reading this char}
+    syn_p_cpos_get (syn, spos);        {save position before reading this char}
     ichar := syn_p_ichar (syn);        {get this input character}
     if syn.err_end then return;        {end of error re-parse ?}
     if not (                           {hit first non-matching char ?}
@@ -163,7 +163,7 @@ begin
       then exit;
     n := n + 1;                        {count one more matching character}
     end;                               {this char matches, back to try next}
-  syn.parse_p^.pos := spos;            {restore to before first non-matching char}
+  syn_p_cpos_set (syn, spos);          {restore to first non-matching char}
   match := n > 0;                      {syntax matched if 1 or more digits}
 
   syn_p_constr_end (syn, match);
@@ -199,7 +199,7 @@ begin
   match := true;                       {init to syntax matched}
   syn_p_tag_start (syn, 1);            {start tagged input string}
   while true do begin                  {back here each new string character}
-    spos := syn.parse_p^.pos;          {save position before this character}
+    syn_p_cpos_get (syn, spos);        {save position before this character}
     ichar := syn_p_ichar (syn);        {get this char}
     if syn.err_end then return;        {end of error re-parse ?}
     if ichar = iq then exit;           {hit closing quote character ?}
@@ -209,7 +209,7 @@ begin
       end;
     end;                               {this char is string body, back for next}
 
-  syn.parse_p^.pos := spos;            {go back to before the ending quote}
+  syn_p_cpos_set (syn, spos);          {go back to before the ending quote}
   syn_p_tag_end (syn, match);          {end the tag for the string content}
   if match then begin                  {there was a valid ending quote}
     discard( syn_p_ichar(syn) );       {consume the ending quote}
