@@ -149,30 +149,38 @@ function syn_chsyn_symbol (
   val_param; internal;
 
 var
-  n: sys_int_machine_t;                {number of characters}
   ichar: sys_int_machine_t;            {character code}
   match: boolean;                      {syntax matched}
   spos: fline_cpos_t;                  {saved input stream position}
+
+label
+  leave;
 
 begin
   syn_chsyn_symbol := false;           {init to syntax did not match}
   syn_p_constr_start (syn, 'SYMBOL', 6);
 
-  n := 0;                              {init number of matching chars found}
+  ichar := syn_p_ichar(syn);           {get the first symbol name character}
+  if syn.err_end then return;          {end of error re-parse ?}
+  if (ichar < ord('a')) or (ichar > ord('z')) {first char doesn't match ?}
+    then goto leave;
+  match := true;                       {there is a symbol name here}
+
   while true do begin
     syn_p_cpos_get (syn, spos);        {save position before reading this char}
     ichar := syn_p_ichar (syn);        {get this input character}
     if syn.err_end then return;        {end of error re-parse ?}
     if not (                           {hit first non-matching char ?}
         ((ichar >= ord('a')) and (ichar <= ord('z'))) or
-        (ichar = ord('_'))
+        ((ichar >= ord('0')) and (ichar <= ord('9'))) or
+        (ichar = ord('_')) or
+        (ichar = ord('$'))
         )
       then exit;
-    n := n + 1;                        {count one more matching character}
     end;                               {this char matches, back to try next}
   syn_p_cpos_set (syn, spos);          {restore to first non-matching char}
-  match := n > 0;                      {syntax matched if 1 or more digits}
 
+leave:                                 {common exit, MATCH all set}
   syn_p_constr_end (syn, match);
   syn_chsyn_symbol := match;
   end;
