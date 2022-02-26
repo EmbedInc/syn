@@ -1,5 +1,5 @@
                   Syntaxer Definition File Specification
-                             26 December 2021
+                             26 February 2022
 
 The Embed syntaxer parses a collection of text lines according to a
 user-defined syntax.  A syntax tree is built from the input lines.  An
@@ -7,6 +7,17 @@ application can traverse this syntax tree to implement whatever semantics
 are defined by the input stream.  This document describes the content of a
 syntax definition file.  Such a file describes the application-specific
 syntax to parse.
+
+
+Comments
+
+  Comments start with the special sequence "/*", and extend to the end of
+  the same line the "/*" is on.  When "/*" does not start in column 1, it
+  must be preceeded by a space.  The slash-star sequence only start a
+  comment when it is not inside a literal string.
+
+  Comments are not further mentioned in this document, but they may appear
+  at the start of any line, or anywhere a space is allowed.
 
 
 Commands

@@ -53,6 +53,13 @@ begin
 ord(' '),
 syn_ichar_eol_k,
 syn_ichar_eof_k: ;
+ord('/'): begin                        {possible start of comment}
+        if syn_p_ichar(syn) <> ord('*') {not start of comment ?}
+          then goto done;
+        while true do begin            {consume chars to end of line}
+          if syn_p_ichar(syn) = syn_ichar_eol_k then exit; {found EOL ?}
+          end;
+        end;
 otherwise
       goto done;
       end;                             {end of characters to skip over cases}
