@@ -158,6 +158,7 @@ label
 
 begin
   syn_chsyn_symbol := false;           {init to syntax did not match}
+  match := false;
   syn_p_constr_start (syn, 'SYMBOL', 6);
 
   ichar := syn_p_ichar(syn);           {get the first symbol name character}
