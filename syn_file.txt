@@ -1,5 +1,5 @@
                   Syntaxer Definition File Specification
-                             26 February 2022
+                             27 February 2022
 
 The Embed syntaxer parses a collection of text lines according to a
 user-defined syntax.  A syntax tree is built from the input lines.  An
@@ -13,7 +13,7 @@ Comments
 
   Comments start with the special sequence "/*", and extend to the end of
   the same line the "/*" is on.  When "/*" does not start in column 1, it
-  must be preceeded by a space.  The slash-star sequence only start a
+  must be preceeded by a space.  The slash-star sequence only starts a
   comment when it is not inside a literal string.
 
   Comments are not further mentioned in this document, but they may appear
@@ -25,9 +25,10 @@ Commands
   The syntax definition is organized as lines of text that are syntaxer
   commands.  These commands start in column 1 with a dot, followed
   immediately by the command name.  Command names and keywords are
-  case-insensitive.  The commands are:
+  case-insensitive, but are show in upper case in this document.  The
+  commands are:
 
-  .SYMBOL name[routine] external
+  .SYMBOL name[routine] EXTERNAL
 
     This command declares NAME as the name of a syntax construction that
     can be used in the remainder of the file.  NAME is case-insensitive.
@@ -156,17 +157,24 @@ Built-in syntax constructions
       expression.  One of UPPER, LOWER, or OFF must appear within the
       brackets.  Their meanings are:
 
-      UPPER
+        UPPER
 
-        Input stream characters are interpreted as if they were upper case.
+          Input stream characters are interpreted as if they were upper
+          case.
 
-      LOWER
+        LOWER
 
-        Input stream characters are interpreted as if they were lower case.
+          Input stream characters are interpreted as if they were lower
+          case.
 
-      OFF
+        OFF
 
-        Input stream characters are interpreted as-is.
+          Input stream characters are interpreted as-is.
+
+      This character case conversion only applies to matching the input
+      stream against the syntax definition.  No character case conversion
+      is applied when the application retrieves the source characters
+      corresponding to a tag.
 
     .EOL
 
@@ -186,7 +194,7 @@ Tagged items
 
   The syntaxer builds a syntax tree as it processes the input stream.  A
   subordinate level is created for each user-defined construction as it is
-  encountered.  The application then "reads" the input stream by
+  encountered.  The application can then "read" the input stream by
   traversing the syntax tree.
 
   When a syntax tree is built without error, it is garanteed that the
