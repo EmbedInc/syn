@@ -161,7 +161,7 @@ procedure syn_lib_new (                {create new use of the SYN library}
 *
 *   Routines for parsing the input and creating a syntax tree.
 }
-function syn_parse_coll (              {clear stack, parse input, build syntax tree}
+function syn_parse_coll (              {parse from start of collection of lines}
   in out  syn: syn_t;                  {SYN library use state}
   in var  coll: fline_coll_t;          {collection of input lines to parse}
   in      syfunc_p: syn_parsefunc_p_t) {top level syntax to parse against}
@@ -175,6 +175,17 @@ procedure syn_parse_err_pos (          {get the position of error after failed p
 
 procedure syn_parse_err_reparse (      {reparse after error, builds tree up to err}
   in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+function syn_parse_next (              {parse, continue from current position}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      syfunc_p: syn_parsefunc_p_t) {top level syntax to parse against}
+  :boolean;                            {no error, syntax tree built}
+  val_param; extern;
+
+procedure syn_parse_pos_coll (         {set parse position to start of collection}
+  in out  syn: syn_t;                  {SYN library use state}
+  in var  coll: fline_coll_t);         {collection to go to start of}
   val_param; extern;
 {
 ********************************************************************************
