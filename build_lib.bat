@@ -9,6 +9,9 @@ call build_pasinit
 
 call src_insall %srcdir% %libname%
 
+call src_get %srcdir% %libname%_%libname%.ins.pas
+copya %libname%_%libname%.ins.pas (cog)lib/%libname%_%libname%.ins.pas
+
 call src_pas %srcdir% %libname%_dbg
 call src_pas %srcdir% %libname%_chsyn
 call src_pas %srcdir% %libname%_fparse
