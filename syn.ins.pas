@@ -126,7 +126,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     pos_start: fline_cpos_t;           {starting position of current parse}
     pos_err: fline_cpos_t;             {farthest parsing position char returned for}
     pos_errnext: fline_cpos_t;         {parsing position after returning at POS_ERR}
-    err: boolean;                      {doing error re-parse}
+    err: boolean;                      {last full parse resulted in error}
     err_end: boolean;                  {err char has been reached in error reparse}
     parse_p: syn_fparse_p_t;           {to current parsing state, on stack}
     parsefunc_p: univ_ptr;             {pointer to top level syntax to parse}
@@ -174,6 +174,10 @@ procedure syn_parse_err_pos (          {get the position of error after failed p
   val_param; extern;
 
 procedure syn_parse_err_reparse (      {reparse after error, builds tree up to err}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_parse_err_show (         {show error position after failed parse}
   in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;
 

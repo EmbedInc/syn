@@ -7,6 +7,7 @@ define syn_parse_next;
 define syn_parse_coll;
 define syn_parse_err_reparse;
 define syn_parse_err_pos;
+define syn_parse_err_show;
 %include 'syn2.ins.pas';
 {
 ********************************************************************************
@@ -161,4 +162,22 @@ procedure syn_parse_err_pos (          {get the position of error after failed p
 
 begin
   epos := syn.pos_err;                 {return the first error character position}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_PARSE_ERR_SHOW (SYN)
+*
+*   Show the syntax error from the last full parse.  Nothing is done if the last
+*   full parse did not end with a syntax error.
+}
+procedure syn_parse_err_show (         {show error position after failed parse}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param;
+
+begin
+  if not syn.err then return;          {no syntax error to complain about ?}
+
+  sys_message ('syn', 'syntax_error');
+  fline_cpos_show (syn.pos_err);       {show position where syntax error encountered}
   end;
