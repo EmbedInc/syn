@@ -18,7 +18,6 @@
 }
 module syn_chsyn;
 define syn_chsyn_command;
-define syn_ch_toplev;
 %include 'syn2.ins.pas';
 
 function syn_chsyn_expression (
@@ -731,7 +730,7 @@ begin
   match := syn_chsyn_space (syn);
   if not match then goto leave;
 
-  syn_p_tag_start (syn, 8);
+  syn_p_tag_start (syn, 1);
   match := syn_chsyn_symbol (syn);
   syn_p_tag_end (syn, match);
   if not match then goto leave;
@@ -745,7 +744,7 @@ begin
   match := syn_chsyn_space (syn);
   if not match then goto leave;
 
-  syn_p_tag_start (syn, 9);
+  syn_p_tag_start (syn, 1);
   match := syn_chsyn_expression (syn);
   syn_p_tag_end (syn, match);
 
@@ -778,7 +777,7 @@ begin
   match := syn_chsyn_space (syn);
   if not match then goto leave;
 
-  syn_p_tag_start (syn, 5);
+  syn_p_tag_start (syn, 1);
   match := syn_chsyn_symbol (syn);
   syn_p_tag_end (syn, match);
   if not match then goto leave;
@@ -791,7 +790,7 @@ begin
     match := syn_p_ichar(syn) = ord('[');
     if not match then exit;
 
-    syn_p_tag_start (syn, 6);
+    syn_p_tag_start (syn, 1);
     match := syn_chsyn_symbol (syn);
     syn_p_tag_end (syn, match);
     if not match then exit;
@@ -804,7 +803,7 @@ begin
       match := syn_chsyn_space (syn);
       if not match then exit;
 
-      syn_p_tag_start (syn, 7);
+      syn_p_tag_start (syn, 2);
       match := syn_p_test_string (syn, 'external', 8);
       syn_p_tag_end (syn, match);
       exit;
@@ -842,14 +841,26 @@ begin
   syn_chsyn_command := false;          {init to syntax did not match}
   syn_p_constr_start (syn, 'COMMAND', 7);
 
-  syn_p_tag_start (syn, 3);
-  match := syn_chsyn_declare (syn);
+  syn_p_charcase (syn, syn_charcase_down_k);
+
+  match := syn_chsyn_pad (syn);
+  if syn.err_end then return;
+  if not match then goto leave;
+
+  syn_p_tag_start (syn, 1);
+  match := syn_p_test_eod (syn);
   if syn.err_end then return;
   syn_p_tag_end (syn, match);
   if match then goto leave;
 
-  syn_p_tag_start (syn, 4);
+  syn_p_tag_start (syn, 2);
   match := syn_chsyn_define (syn);
+  if syn.err_end then return;
+  syn_p_tag_end (syn, match);
+  if match then goto leave;
+
+  syn_p_tag_start (syn, 3);
+  match := syn_chsyn_declare (syn);
   if syn.err_end then return;
   syn_p_tag_end (syn, match);
 
@@ -857,42 +868,4 @@ leave:
   if syn.err_end then return;
   syn_p_constr_end (syn, match);
   syn_chsyn_command := match;
-  end;
-{
-********************************************************************************
-}
-function syn_ch_toplev (
-  in out  syn: syn_t)
-  :boolean;
-  val_param;
-
-var
-  match: boolean;                      {syntax matched}
-
-label
-  leave;
-
-begin
-  syn_ch_toplev := false;              {init to syntax did not match}
-  syn_p_constr_start (syn, 'TOPLEV', 6);
-
-  syn_p_charcase (syn, syn_charcase_down_k);
-
-  while true do begin
-    match := syn_chsyn_pad (syn);
-    if not match then exit;
-    match := syn_chsyn_command (syn);
-    if not match then exit;
-    end;
-  if syn.err_end then return;
-
-  match := syn_chsyn_pad (syn);
-  if not match then goto leave;
-
-  match := syn_p_test_eod (syn);
-
-leave:
-  if syn.err_end then return;
-  syn_p_constr_end (syn, match);
-  syn_ch_toplev := match;
   end;

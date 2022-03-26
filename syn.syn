@@ -1,4 +1,3 @@
-.symbol toplev[syn_ch_toplev]
 .symbol command[syn_chsyn_command]
 .symbol declare[syn_chsyn_declare]
 .symbol define[syn_chsyn_define]
@@ -89,21 +88,20 @@
   .or .null[3]
 
 .define DEFINE .as
-  '.define' space symbol[8] space '.as' space expression[9]
+  '.define' space symbol[1] space '.as' space expression[1]
 
 .define DECLARE .as
   '.symbol' space
-  symbol[5] pad
-  .optional (
-    '[' symbol[6] ']'
-    .optional (space 'external'[7])
+  symbol[1] pad
+  .occurs [0 to 1] (
+    '[' symbol[1] ']'
+    .occurs [0 to 1] (space 'external'[2])
     )
 
 .define COMMAND .as
-  declare[3]
-  .or define[4]
-
-.define toplev .as
   .charcase [lower]
-  .occurs[0 to inf] (pad command)
-  pad .EOD
+  pad (
+  .EOD[1]
+  .or define[2]
+  .or declare[3]
+  )

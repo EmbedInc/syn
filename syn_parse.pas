@@ -8,6 +8,7 @@ define syn_parse_coll;
 define syn_parse_err_reparse;
 define syn_parse_err_pos;
 define syn_parse_err_show;
+define syn_parse_end;
 %include 'syn2.ins.pas';
 {
 ********************************************************************************
@@ -180,4 +181,20 @@ begin
 
   sys_message ('syn', 'syntax_error');
   fline_cpos_show (syn.pos_err);       {show position where syntax error encountered}
+  end;
+{
+********************************************************************************
+*
+*   Function SYN_PARSE_END (SYN)
+*
+*   Returns TRUE iff the current parsing position is after the end of the
+*   collection.
+}
+function syn_parse_end (               {check for at end of input}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {parse position is after all data}
+  val_param;
+
+begin
+  syn_parse_end := fline_cpos_eof (syn.parse_p^.pos);
   end;

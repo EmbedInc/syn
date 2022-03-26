@@ -9,11 +9,6 @@
 {
 *   Subroutines and functions.
 }
-function syn_chsyn_command (           {top level syntax routine for the SYN syntax}
-  in out  syn: syn_t)                  {SYN library use state}
-  :boolean;                            {input stream matched syntax}
-  val_param; extern;
-
 procedure syn_fparse_init (            {init stack for parsing, delete previous contents}
   in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;

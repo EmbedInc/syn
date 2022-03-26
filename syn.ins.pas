@@ -168,6 +168,11 @@ function syn_parse_coll (              {parse from start of collection of lines}
   :boolean;                            {no error, syntax tree built}
   val_param; extern;
 
+function syn_parse_end (               {check for at end of input}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {parse position is after all data}
+  val_param; extern;
+
 procedure syn_parse_err_pos (          {get the position of error after failed parse}
   in out  syn: syn_t;                  {SYN library use state}
   out     epos: fline_cpos_t);         {position of first char not to match syntax}
@@ -366,4 +371,17 @@ function syn_p_test_string (           {check input for matching string}
   in      str: string;                 {the string to compare to the input}
   in      strlen: sys_int_machine_t)   {number of characters in STR}
   :boolean;                            {input matched string, position left at end}
+  val_param; extern;
+{
+********************************************************************************
+*
+*   Routines for parsing syntax definition files.  These are syntax parsing
+*   functions that take a SYN library use state as input and return TRUE iff the
+*   input matched the expected syntax.  These are routines specific to parsing
+*   the SYN syntax, and have names SYN_CHSYN_xxx, where XXX is the name of the
+*   syntax construction to parse.
+}
+function syn_chsyn_command (           {parse one SYN command, or end of data}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {TRUE iff input matched expected syntax}
   val_param; extern;
