@@ -18,6 +18,7 @@ define syn_trav_goto;
 define syn_trav_push;
 define syn_trav_pop;
 define syn_trav_popdel;
+define syn_trav_tag_err;
 %include 'syn2.ins.pas';
 {
 ********************************************************************************
@@ -384,4 +385,71 @@ begin
 
   syn.travstk_p := syn.travstk_p^.prev_p; {point back to previous stack frame}
   syn_stack_pop (syn, sizeof(syn.travstk_p^)); {pop the stack}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_TRAV_TAG_ERR (SYN, SUBSYS, MSG, PARMS, N_PARMS)
+*
+*   Write error message about unexpected tag at the current syntax tree entry.
+*   The error message indicated by SUSBYS, MSG, PARMS, and N_PARMS is written
+*   first.
+}
+procedure syn_trav_tag_err (           {unexpected tag from curr entry, write err message}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      subsys: string;              {name of subsystem, used to find message file}
+  in      msg: string;                 {message name withing subsystem file}
+  in      parms: univ sys_parm_msg_ar_t; {array of parameter descriptors}
+  in      n_parms: sys_int_machine_t); {number of parameters in PARMS}
+  val_param;
+
+const
+  max_msg_args = 2;                    {max arguments we can pass to a message}
+
+var
+  name: string_var32_t;                {name of current syntax construction}
+  name2: string_var32_t;               {name of other syntax construction}
+  msg_parm:                            {references arguments passed to a message}
+    array[1..max_msg_args] of sys_parm_msg_t;
+
+begin
+  name.max := size_char(name.str);     {init local var strings}
+  name2.max := size_char(name2.str);
+  name2.len := 0;
+
+  sys_message_parms (subsys, msg, parms, n_parms); {write caller's error message}
+
+  syn_trav_level_name (syn, name);     {get name of this syntax construction}
+
+  case syn.tent_p^.ttype of            {what type of syntax tree entry is here ?}
+syn_ttype_lev_k: begin
+      sys_msg_parm_vstr (msg_parm[1], name);
+      sys_message_parms ('syn', 'tag_lev_start', msg_parm, 1);
+      end;
+syn_ttype_sub_k: begin
+      sys_msg_parm_vstr (msg_parm[1], name);
+      if syn.tent_p^.sub_p^.lev_name_p <> nil then begin
+        sys_msg_parm_vstr (msg_parm[2], name2);
+        end;
+      sys_message_parms ('syn', 'tag_sub', msg_parm, 2);
+      end;
+syn_ttype_tag_k: begin
+      sys_msg_parm_vstr (msg_parm[1], name);
+      sys_msg_parm_int (msg_parm[2], syn.tent_p^.tag);
+      sys_message_parms ('syn', 'tag_unexpected', msg_parm, 2);
+      fline_cpos_show (syn.tent_p^.tag_st);
+      end;
+syn_ttype_end_k: begin
+      sys_msg_parm_vstr (msg_parm[1], name);
+      sys_message_parms ('syn', 'tag_lev_end', msg_parm, 1);
+      end;
+syn_ttype_err_k: begin
+      sys_message_parms ('syn', 'tag_err', nil, 0);
+      fline_cpos_show (syn.tent_p^.err_pos);
+      end;
+otherwise
+    writeln ('INTERNAL ERROR: Urecognized syntax tree entry type of ',
+      ord(syn.tent_p^.ttype), ' encountered in SYN_TRAV_TAG_ERR.');
+    sys_bomb;
+    end;
   end;

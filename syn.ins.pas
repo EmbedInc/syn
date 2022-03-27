@@ -267,6 +267,14 @@ function syn_trav_tag (                {get ID of current tag entry}
   :sys_int_machine_t;                  {1-N tag number or SYN_TAG_xxx_K}
   val_param; extern;
 
+procedure syn_trav_tag_err (           {unexpected tag from curr entry, write err message}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      subsys: string;              {name of subsystem, used to find message file}
+  in      msg: string;                 {message name withing subsystem file}
+  in      parms: univ sys_parm_msg_ar_t; {array of parameter descriptors}
+  in      n_parms: sys_int_machine_t); {number of parameters in PARMS}
+  val_param; extern;
+
 procedure syn_trav_tag_start (         {get start loc for tag at curr tree entry}
   in out  syn: syn_t;                  {SYN library use state}
   out     pos: fline_cpos_t);          {start of tagged string in soruce lines}

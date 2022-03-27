@@ -105,3 +105,29 @@ msg tag_unexpected
 msg handle_bad
   lan english -def
     Routine %p1s called with invalid SYN library use handle.
+
+msg tag_err
+  lan english -def
+    Syntax error.  The first character that did not match the syntax
+    template is at:
+msg tag_lev_end
+  lan english -def
+    The end of syntax construction "%p1s" was found when a tag was
+    expected.  This should not occurr, and is probably due to the syntax
+    definition file and source code being out of sync.
+msg tag_lev_start
+  lan english -def
+    The start of syntax construction "%p1s" was found when a tag was
+    expected.  This should not occurr, and is probably due to the syntax
+    definition file and source code being out of sync.
+msg tag_sub
+  lan english -def
+    Subordinate syntax construction "p2s" was found in construction "p1s"
+    when a tag was expected.  This should not occurr, and is probably due
+    to the syntax definition file and source code being out of sync.
+msg tag_unexpected
+  lan english -def
+    Unexpected syntax tag value of %p2i was found in syntax construction
+    "p1s".  This should not occurr, and is probably due to the syntax
+    definition file and source code being out of sync.  The error occurred
+    at:
