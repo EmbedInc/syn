@@ -164,6 +164,7 @@ procedure syn_fparse_level_pop (       {pop curr syntax level from stack}
 var
   lev_p: syn_fparse_p_t;               {points to frame for start of curr level}
   old_p: syn_fparse_p_t;               {points to previous frame before this level}
+  end_p: syn_tent_p_t;                 {points to new end of level syn tree entry}
 
 begin
   lev_p := syn.parse_p^.frame_lev_p;   {point to frame that started this level}
@@ -176,6 +177,9 @@ begin
       old_p^.pos := syn.parse_p^.pos;  {update to current input stream position}
       if syn.parse_p^.tagged
         then begin                     {tags created, keep the new level}
+          syn_tree_add_end (           {create end of syn tree level entry}
+            syn, syn.parse_p^.tent_p^, end_p);
+          syn.parse_p^.tent_p := end_p; {make the new END entry current}
           old_p^.tent_p := lev_p^.tent_def_p^.lev_up_p; {to SUB entry in parent level}
           old_p^.tagged := true;
           end

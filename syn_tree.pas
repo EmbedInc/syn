@@ -6,6 +6,7 @@ define syn_tree_del;
 define syn_tree_add_sub;
 define syn_tree_add_tag;
 define syn_tree_add_err;
+define syn_tree_add_end;
 define syn_tree_trunc;
 %include 'syn2.ins.pas';
 {
@@ -247,6 +248,29 @@ begin
   err_p^.levst_p := par.levst_p;       {point to entry for start of this level}
   err_p^.ttype := syn_ttype_err_k;     {this entry is for error end of syntax}
   err_p^.err_pos := cpos;              {save character position of the error}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_TREE_ADD_END (SYN, PAR, END_P)
+*
+*   Add the syntax tree entry to end the current syntax level.  PAR is the
+*   syntax tree entry to append to.  END_P is returned pointing to the new
+*   syntax tree entry.
+}
+procedure syn_tree_add_end (           {add end of level entry to syntax tree}
+  in out  syn: syn_t;                  {SYN library use state}
+  in out  par: syn_tent_t;             {parent syntax tree entry}
+  out     end_p: syn_tent_p_t);        {returned pointer to the new syn tree entry}
+  val_param;
+
+begin
+  syn_tree_ent_add (syn, end_p);       {create descriptor for the new tree entry}
+  end_p^.back_p := addr(par);          {point back to previous entry}
+  par.next_p := end_p;                 {link to from parent tree entry}
+
+  end_p^.levst_p := par.levst_p;       {point to entry for start of this level}
+  end_p^.ttype := syn_ttype_end_k;     {indicate end of this syntax level}
   end;
 {
 ********************************************************************************

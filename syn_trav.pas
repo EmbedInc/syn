@@ -2,14 +2,15 @@
 }
 module syn_trav;
 define syn_trav_init;
+define syn_trav_type;
 define syn_trav_next;
 define syn_trav_down;
 define syn_trav_next_down;
 define syn_trav_up;
 define syn_trav_level;
 define syn_trav_level_name;
-define syn_trav_next_tag;
 define syn_trav_tag;
+define syn_trav_next_tag;
 define syn_trav_tag_start;
 define syn_trav_tag_string;
 define syn_trav_save;
@@ -41,6 +42,31 @@ begin
 {
 ********************************************************************************
 *
+*   Function SYN_TRAV_TYPE (SYN)
+*
+*   Returns the type of the current syntax tree entry.
+}
+function syn_trav_type (               {get type of current syntax tree entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :syn_tent_k_t;                       {syntax tree entry type ID}
+  val_param;
+
+begin
+  case syn.tent_p^.ttype of
+syn_ttype_lev_k: syn_trav_type := syn_tent_lev_k;
+syn_ttype_sub_k: syn_trav_type := syn_tent_sub_k;
+syn_ttype_tag_k: syn_trav_type := syn_tent_tag_k;
+syn_ttype_end_k: syn_trav_type := syn_tent_end_k;
+syn_ttype_err_k: syn_trav_type := syn_tent_err_k;
+otherwise
+    writeln ('INTERNAL ERROR: Found unexpected syntax tree entry ID of ',
+      ord(syn.tent_p^.ttype), ' in SYN_TRAV_TYPE.');
+    sys_bomb;
+    end;
+  end;
+{
+********************************************************************************
+*
 *   Function SYN_TRAV_NEXT (SYN)
 *
 *   Go to the next syntax tree entry this level, and return the new entry type.
@@ -57,20 +83,7 @@ begin
     end;
 
   syn.tent_p := syn.tent_p^.next_p;    {go to the next entry}
-  case syn.tent_p^.ttype of            {what kind of entry is this ?}
-syn_ttype_lev_k: begin
-      writeln ('INTERNAL ERROR: Unexpected start of level syntax tree entry');
-      writeln ('found within previously-started level.  In SYN_TRAV_NEXT.');
-      sys_bomb;
-      end;
-syn_ttype_sub_k: syn_trav_next := syn_tent_sub_k;
-syn_ttype_tag_k: syn_trav_next := syn_tent_tag_k;
-syn_ttype_err_k: syn_trav_next := syn_tent_err_k;
-otherwise
-    writeln ('INTERNAL ERROR: Found unexpected syntax tree entry ID of ',
-      ord(syn.tent_p^.ttype), ' in SYN_TRAV_NEXT.');
-    sys_bomb;
-    end;
+  syn_trav_next := syn_trav_type (syn); {get the type of the new entry}
   end;
 {
 ********************************************************************************
@@ -149,7 +162,7 @@ begin
 *   Function SYN_TRAV_LEVEL (SYN)
 *
 *   Returns the 0-N nesting level of the current syntax tree position.  0 is the
-*   top level that has no parent.
+*   top level, which has no parent.
 }
 function syn_trav_level (              {get nesting level of curr syntax tree pos}
   in out  syn: syn_t)                  {SYN library use state}
@@ -185,17 +198,39 @@ begin
 {
 ********************************************************************************
 *
+*   Function SYN_TRAV_TAG (SYN)
+*
+*   Get the 1-N tag ID for the current syntax tree entry.  If the current entry
+*   is not a tag, then one of the SYN_TAG_xxx_K constants is returned.  All such
+*   constants have a value less than 1.
+}
+function syn_trav_tag (                {get ID of current tag entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :sys_int_machine_t;                  {1-N tag number or SYN_TAG_xxx_K}
+  val_param;
+
+begin
+  case syn.tent_p^.ttype of            {what kind of entry is here ?}
+syn_ttype_lev_k: syn_trav_tag := syn_tag_lev_k;
+syn_ttype_sub_k: syn_trav_tag := syn_tag_sub_k;
+syn_ttype_tag_k: syn_trav_tag := syn.tent_p^.tag; {1-N tag ID}
+syn_ttype_end_k: syn_trav_tag := syn_tag_end_k;
+syn_ttype_err_k: syn_trav_tag := syn_tag_err_k;
+otherwise
+    writeln ('INTERNAL ERROR: Found unexpected syntax tree entry ID of ',
+      ord(syn.tent_p^.ttype), ' in SYN_TRAV_TAG.');
+    sys_bomb;
+    end;
+  end;
+{
+********************************************************************************
+*
 *   Function SYN_TRAV_NEXT_TAG (SYN)
 *
-*   Goes to the next syntax tree entry and return its tag ID.  On success, the
-*   function returns the 1-N tag number.  Otherwise, the function returns one
-*   of the special values SYN_TAG_xxx_K, which all have values less than 1:
-*
-*     SYN_TAG_END_K  -  At end of syntax level.  There is no next entry.
-*
-*     SYN_TAG_NTAG_K  -  There is a next entry, but it is not a tag.
-*
-*     SYN_TAG_ERR_K  -  Hit error end of the syntax tree.
+*   Goes to the next syntax tree entry and return its tag ID.  When the next
+*   syntax tree entry exists and is a tag, the function returns the 1-N tag
+*   number.  Otherwise, the function returns one of the special SYN_TAG_xxx_K
+*   tag values.  The special tag values always have values less than 1.
 }
 function syn_trav_next_tag (           {to next entry, return its tag value}
   in out  syn: syn_t)                  {SYN library use state}
@@ -203,43 +238,8 @@ function syn_trav_next_tag (           {to next entry, return its tag value}
   val_param;
 
 begin
-  if syn.tent_p^.next_p = nil then begin {there is no next entry ?}
-    syn_trav_next_tag := syn_tag_end_k;
-    return;
-    end;
-
-  case syn.tent_p^.next_p^.ttype of    {what type of entry is next ?}
-syn_ttype_tag_k: begin                 {tag entry, as expected}
-      syn.tent_p := syn.tent_p^.next_p; {go to this tag entry}
-      syn_trav_next_tag := syn.tent_p^.tag; {return the 1-N tag ID}
-      end;
-syn_ttype_err_k: begin                 {hit error end of syntax tree}
-      syn_trav_next_tag := syn_tag_err_k;
-      end;
-otherwise
-    syn_trav_next_tag := syn_tag_ntag_k; {not a tag entry, didn't move}
-    end;
-  end;
-{
-********************************************************************************
-*
-*   Function SYN_TRAV_TAG (SYN)
-*
-*   Get the tag ID for the current syntax tree entry.  SYN_TAG_NTAG_K is
-*   returned if the current syntax tree position is on at a tag.
-}
-function syn_trav_tag (                {get ID of current tag entry}
-  in out  syn: syn_t)                  {SYN library use state}
-  :sys_int_machine_t;                  {1-N tag number or SYN_TAG_NTAG_K}
-  val_param;
-
-begin
-  if syn.tent_p^.ttype <> syn_ttype_tag_k then begin {not at a tag ?}
-    syn_trav_tag := syn_tag_ntag_k;
-    return;
-    end;
-
-  syn_trav_tag := syn.tent_p^.tag;     {return the tag ID}
+  discard( syn_trav_next (syn) );      {go to next syn tree entry, if present}
+  syn_trav_next_tag := syn_trav_tag (syn); {return tag for this new entry}
   end;
 {
 ********************************************************************************

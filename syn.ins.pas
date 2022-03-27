@@ -43,8 +43,9 @@ const
 *   values are greater than 0.  These special tag values are 0 or less.
 }
   syn_tag_end_k = 0;                   {end of syntax level}
-  syn_tag_ntag_k = -1;                 {next syntax tree entry is not a tag}
-  syn_tag_err_k = -2;                  {error end of syntax tree encountered}
+  syn_tag_err_k = -1;                  {error end of syntax tree encountered}
+  syn_tag_sub_k = -2;                  {subordinate level, no tag}
+  syn_tag_lev_k = -3;                  {at start of level, no tag}
 
 type
   syn_charcase_k_t = (                 {how to handle input stream character case}
@@ -53,15 +54,17 @@ type
     syn_charcase_asis_k);              {do not alter input stream characters (default)}
 
   syn_tent_k_t = (                     {user-visible syntax tree entry types}
-    syn_tent_err_k,                    {error end of syntax tree}
-    syn_tent_end_k,                    {end of current level}
+    syn_tent_lev_k,                    {start of syntax level}
     syn_tent_sub_k,                    {subordinate level is here}
-    syn_tent_tag_k);                   {tagged input string}
+    syn_tent_tag_k,                    {tagged input string}
+    syn_tent_end_k,                    {end of current level}
+    syn_tent_err_k);                   {error end of syntax tree}
 
   syn_ttype_k_t = (                    {internal syntax tree entry types}
     syn_ttype_lev_k,                   {start of a syntax level}
     syn_ttype_sub_k,                   {link to subordinate level}
     syn_ttype_tag_k,                   {tagged item}
+    syn_ttype_end_k,                   {end of current syntax level}
     syn_ttype_err_k);                  {error end of tree}
 
   syn_tent_p_t = ^syn_tent_t;
@@ -83,6 +86,8 @@ syn_ttype_tag_k: (                     {tagged item}
       tag: sys_int_machine_t;          {tag ID}
       tag_st: fline_cpos_t;            {starting char pos of tagged string}
       tag_af: fline_cpos_t;            {first char pos after tagged string}
+      );
+syn_ttype_end_k: (                     {end of current syntax level}
       );
 syn_ttype_err_k: (                     {error end of syntax tree}
       err_pos: fline_cpos_t;           {pos of first char not matching the syntax}
@@ -270,6 +275,11 @@ procedure syn_trav_tag_start (         {get start loc for tag at curr tree entry
 procedure syn_trav_tag_string (        {get string tagged by current tree entry}
   in out  syn: syn_t;                  {SYN library use state}
   in out  tagstr: univ string_var_arg_t); {returned tagged string}
+  val_param; extern;
+
+function syn_trav_type (               {get type of current syntax tree entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :syn_tent_k_t;                       {syntax tree entry type ID}
   val_param; extern;
 
 function syn_trav_up (                 {pop up to parent syntax tree level}
