@@ -1,3 +1,5 @@
+/*   Syntax definition of the syntax definition language.
+/*
 .symbol command[syn_chsyn_command]
 .symbol declare[syn_chsyn_declare]
 .symbol define[syn_chsyn_define]
