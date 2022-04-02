@@ -1,7 +1,7 @@
                              Program TEST_SYN
-                             31 December 2021
+                               2 April 2022
 
-test_syn fnam [fnam]
+test_syn [fnam]
 
 Test program for the SYN library.  A SYN library syntax definition file is
 read, and the resulting syntax tree shown.  The mandatory ".syn" file name
