@@ -210,6 +210,24 @@ function syn_trav_down (               {down into subordinate level from curr en
   :boolean;                            {successfully entered subordinate level}
   val_param; extern;
 
+procedure syn_trav_error (             {show msg and curr position on error}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      stat: sys_err_t;             {error code}
+  in      subsys_name: string;         {subsystem name of caller's message}
+  in      msg_name: string;            {name of caller's message within subsystem}
+  in      parms: univ sys_parm_msg_ar_t; {array of parameter descriptors}
+  in      n_parms: sys_int_machine_t); {number of parameters in PARMS}
+  val_param; extern;
+
+procedure syn_trav_error_abort (       {show msg, curr pos, and bomb on error}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      stat: sys_err_t;             {error code}
+  in      subsys_name: string;         {subsystem name of caller's message}
+  in      msg_name: string;            {name of caller's message within subsystem}
+  in      parms: univ sys_parm_msg_ar_t; {array of parameter descriptors}
+  in      n_parms: sys_int_machine_t); {number of parameters in PARMS}
+  val_param; extern;
+
 procedure syn_trav_goto (              {go to previously-saved syn tree position}
   in out  syn: syn_t;                  {SYN library use state}
   in      pos: syn_treepos_t);         {saved position to go to}
@@ -249,6 +267,10 @@ procedure syn_trav_pop (               {restore curr syntx tree pos from stack}
   val_param; extern;
 
 procedure syn_trav_popdel (            {pop syn tree pos from stack, stay curr pos}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_trav_pos_show (          {show current input stream position}
   in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;
 

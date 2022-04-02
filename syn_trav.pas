@@ -19,6 +19,9 @@ define syn_trav_push;
 define syn_trav_pop;
 define syn_trav_popdel;
 define syn_trav_tag_err;
+define syn_trav_pos_show;
+define syn_trav_error;
+define syn_trav_error_abort;
 %include 'syn2.ins.pas';
 {
 ********************************************************************************
@@ -452,4 +455,64 @@ otherwise
     sys_bomb;
     end;
   fline_cpos_show (syn.tent_p^.pos);   {show the input stream position}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_TRAV_POS_SHOW (SYN)
+*
+*   Show the input stream position related to the current syntax tree entry.
+}
+procedure syn_trav_pos_show (          {show current input stream position}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param;
+
+begin
+  fline_cpos_show (syn.tent_p^.pos);
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_TRAV_ERROR (SYN, STAT, SUBSYS, MSG_NAME, PARMS, N_PARMS)
+*
+*   Show the message associated with the status STAT, the user message specified
+*   by SUBSYS, MSG_NAME, PARMS, and N_PARMS, then the input stream location
+*   associated with the current syntax tree entry.
+}
+procedure syn_trav_error (             {show STAT msg, user msg, curr position}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      stat: sys_err_t;             {error code}
+  in      subsys_name: string;         {subsystem name of caller's message}
+  in      msg_name: string;            {name of caller's message within subsystem}
+  in      parms: univ sys_parm_msg_ar_t; {array of parameter descriptors}
+  in      n_parms: sys_int_machine_t); {number of parameters in PARMS}
+  val_param;
+
+begin
+  sys_error_print (stat, subsys_name, msg_name, parms, n_parms);
+  syn_trav_pos_show (syn);
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_TRAV_ERROR_ABORT (SYN, STAT, SUBSYS_NAME, MSG_NAME, PARMS,
+*     N_PARMS)
+*
+*   When STAT indicates an error, show the error, the user message, the input
+*   stream location associated with the current syntax tree entry, and then bomb
+*   the program.  Nothing is done when STAT does not indicate an error.
+}
+procedure syn_trav_error_abort (       {show msg, curr pos, and bomb on error}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      stat: sys_err_t;             {error code}
+  in      subsys_name: string;         {subsystem name of caller's message}
+  in      msg_name: string;            {name of caller's message within subsystem}
+  in      parms: univ sys_parm_msg_ar_t; {array of parameter descriptors}
+  in      n_parms: sys_int_machine_t); {number of parameters in PARMS}
+  val_param;
+
+begin
+  if not sys_error(stat) then return;  {no error, nothing to do ?}
+  syn_trav_error (syn, stat, subsys_name, msg_name, parms, n_parms);
+  sys_bomb;
   end;
