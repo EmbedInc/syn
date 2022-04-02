@@ -263,7 +263,7 @@ begin
     return;
     end;
 
-  pos := syn.tent_p^.tag_st;           {return pos of first tagged char}
+  pos := syn.tent_p^.pos;              {return pos of first tagged char}
   end;
 {
 ********************************************************************************
@@ -287,7 +287,7 @@ begin
   if syn.tent_p^.ttype <> syn_ttype_tag_k {not at a tag ?}
     then return;
 
-  pos := syn.tent_p^.tag_st;           {init to starting character position}
+  pos := syn.tent_p^.pos;              {init to starting character position}
   while                                {back here until after end of tagged string}
       (pos.ind <> syn.tent_p^.tag_af.ind) or
       (pos.line_p <> syn.tent_p^.tag_af.line_p)
@@ -429,15 +429,15 @@ syn_ttype_lev_k: begin
 syn_ttype_sub_k: begin
       sys_msg_parm_vstr (msg_parm[1], name);
       if syn.tent_p^.sub_p^.lev_name_p <> nil then begin
-        sys_msg_parm_vstr (msg_parm[2], name2);
+        string_copy (syn.tent_p^.sub_p^.lev_name_p^, name2);
         end;
+      sys_msg_parm_vstr (msg_parm[2], name2);
       sys_message_parms ('syn', 'tag_sub', msg_parm, 2);
       end;
 syn_ttype_tag_k: begin
       sys_msg_parm_vstr (msg_parm[1], name);
       sys_msg_parm_int (msg_parm[2], syn.tent_p^.tag);
       sys_message_parms ('syn', 'tag_unexpected', msg_parm, 2);
-      fline_cpos_show (syn.tent_p^.tag_st);
       end;
 syn_ttype_end_k: begin
       sys_msg_parm_vstr (msg_parm[1], name);
@@ -445,11 +445,11 @@ syn_ttype_end_k: begin
       end;
 syn_ttype_err_k: begin
       sys_message_parms ('syn', 'tag_err', nil, 0);
-      fline_cpos_show (syn.tent_p^.err_pos);
       end;
 otherwise
     writeln ('INTERNAL ERROR: Urecognized syntax tree entry type of ',
       ord(syn.tent_p^.ttype), ' encountered in SYN_TRAV_TAG_ERR.');
     sys_bomb;
     end;
+  fline_cpos_show (syn.tent_p^.pos);   {show the input stream position}
   end;

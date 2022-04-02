@@ -72,6 +72,7 @@ type
     back_p: syn_tent_p_t;              {pointer to previous or parent tree entry}
     next_p: syn_tent_p_t;              {to next entry this level, NIL at end of level}
     levst_p: syn_tent_p_t;             {points to starting entry for this level}
+    pos: fline_cpos_t;                 {char position at this point in the syntax}
     ttype: syn_ttype_k_t;              {what kind of entry this is}
     case syn_ttype_k_t of
 syn_ttype_lev_k: (                     {start of a syntax level}
@@ -84,13 +85,11 @@ syn_ttype_sub_k: (                     {link to subordinate level}
       );
 syn_ttype_tag_k: (                     {tagged item}
       tag: sys_int_machine_t;          {tag ID}
-      tag_st: fline_cpos_t;            {starting char pos of tagged string}
       tag_af: fline_cpos_t;            {first char pos after tagged string}
       );
 syn_ttype_end_k: (                     {end of current syntax level}
       );
 syn_ttype_err_k: (                     {error end of syntax tree}
-      err_pos: fline_cpos_t;           {pos of first char not matching the syntax}
       );
     end;
 

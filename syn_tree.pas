@@ -94,6 +94,8 @@ begin
 *
 *     NEXT_P  -  Initialized to NIL as a convenience.
 *
+*     POS  -  Initialized to the current parsing position if there is one.
+*
 *   All other fields are uninitialized.
 }
 procedure syn_tree_ent_add (           {make new syntax tree entry after curr}
@@ -104,6 +106,15 @@ procedure syn_tree_ent_add (           {make new syntax tree entry after curr}
 begin
   syn_tree_ent_alloc (syn, ent_p);     {allocate memory for the descriptor}
   ent_p^.next_p := nil;                {init to no following entry at this level}
+  if syn.parse_p = nil
+    then begin                         {current position is not available}
+      ent_p^.pos.line_p := nil;        {not on a particular line}
+      ent_p^.pos.ind := -1;            {indicate before any data}
+      end
+    else begin                         {there is a current position}
+      ent_p^.pos := syn.parse_p^.pos;  {init to at current parsing position}
+      end
+    ;
   end;
 {
 ********************************************************************************
@@ -219,9 +230,9 @@ begin
   par.next_p := tag_p;                 {link to from parent tree entry}
 
   tag_p^.levst_p := par.levst_p;       {point to entry for start of this level}
+  tag_p^.pos := cpos;                  {save input stream position here}
   tag_p^.ttype := syn_ttype_tag_k;     {this entry is for tagged input string}
   tag_p^.tag := id;                    {save tag ID}
-  tag_p^.tag_st := cpos;               {set starting input stream position}
   tag_p^.tag_af := cpos;               {init ending input stream position}
   end;
 {
@@ -246,8 +257,8 @@ begin
   par.next_p := err_p;                 {link to from parent tree entry}
 
   err_p^.levst_p := par.levst_p;       {point to entry for start of this level}
+  err_p^.pos := cpos;                  {save input stream position of the error}
   err_p^.ttype := syn_ttype_err_k;     {this entry is for error end of syntax}
-  err_p^.err_pos := cpos;              {save character position of the error}
   end;
 {
 ********************************************************************************
