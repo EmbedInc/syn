@@ -16,6 +16,7 @@ call src_pas %srcdir% %libname%_dbg
 call src_pas %srcdir% %libname%_chsyn
 call src_pas %srcdir% %libname%_fparse
 call src_pas %srcdir% %libname%_lib
+call src_pas %srcdir% %libname%_msg
 call src_pas %srcdir% %libname%_names
 call src_pas %srcdir% %libname%_p
 call src_pas %srcdir% %libname%_parse

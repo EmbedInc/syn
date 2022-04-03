@@ -2,6 +2,7 @@ syn_dbg.obj
 syn_chsyn.obj
 syn_fparse.obj
 syn_lib.obj
+syn_msg.obj
 syn_names.obj
 syn_p.obj
 syn_parse.obj

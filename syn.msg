@@ -106,6 +106,11 @@ msg handle_bad
   lan english -def
     Routine %p1s called with invalid SYN library use handle.
 
+msg no_tree_entry
+  lan english -def
+    SYN library application error: There is no current syntax tree entry,
+    or the syntax tree is not being traversed.
+
 msg tag_err
   lan english -def
     Syntax error.  The first character that did not match the syntax
