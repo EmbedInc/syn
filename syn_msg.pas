@@ -12,8 +12,8 @@
 }
 module syn_msg;
 define syn_pos_show;
-define syn_syn_msg_pos;
-define syn_syn_msg_pos_bomb;
+define syn_msg_pos;
+define syn_msg_pos_bomb;
 define syn_error;
 define syn_error_bomb;
 define syn_msg_tag_err;
