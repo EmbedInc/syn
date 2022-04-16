@@ -1,12 +1,12 @@
 {   Syntax parsing routines for the SYN syntax definition file syntax.  The SYN
 *   syntax definition file format is described in the SYN_FILE help file.
 *
-*   The routines here be created by compiling the SYN.SYN syntax definition
-*   file.  However, there is a circular problem because that requires parsing
-*   that file, which requires the result of compiling it.  This module was
-*   originally hand-written to implement the minimum syntax that SYN.SYN adheres
-*   to.  Once it is possible to compile syntax definition files, the code here
-*   should be replaced by the result of compiling SYN.SYN.
+*   The routines here would normally be created by compiling the SYN.SYN syntax
+*   definition file.  However, there is a circular problem because that requires
+*   parsing that file, which requires the result of compiling it.  This module
+*   was originally hand-written to implement the minimum syntax that SYN.SYN
+*   adheres to.  Once the whole system is up and running, some routines will be
+*   replaced with the ones automatically generated from the SYN syntax file.
 *
 *   All the routines here are named SYN_CHSYN_name.  Such names are guaranteed
 *   to not be used elsewhere in the SYN library, and are different from the
