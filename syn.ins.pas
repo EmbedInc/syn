@@ -37,7 +37,7 @@ const
   syn_ichar_eol_k = -1;                {end of line}
   syn_ichar_eof_k = -2;                {end of current file (end of subordinate collection)}
   syn_ichar_eod_k = -3;                {end of all input data}
-  syn_ichar_inv_k = -4;                {invalid, should not match anything}
+  syn_ichar_err_k = -4;                {err char reached on error re-parse}
 {
 *   Special tag values that can be returned by SYN_TRAV_TAG_NEXT.  All user tag
 *   values are greater than 0.  These special tag values are 0 or less.
@@ -363,7 +363,8 @@ procedure syn_pos_show (               {show input stream pos at curr tree entry
 *
 *   FALSE means that the parsed input did not match the syntax construction.
 *   The input stream position has been returned to what it was when the routine
-*   was called, and the syntax tree has not changed.
+*   was called, and the syntax tree has not changed.  FALSE is also returned when
+*   end of error re-parse is encountered.
 }
 procedure syn_dbg_tree (               {show syntax tree on STDOUT, for debugging}
   in out  syn: syn_t);                 {SYN library use state}
@@ -445,9 +446,13 @@ function syn_p_test_string (           {check input for matching string}
 *
 *   Routines for parsing syntax definition files.  These are syntax parsing
 *   functions that take a SYN library use state as input and return TRUE iff the
-*   input matched the expected syntax.  These are routines specific to parsing
-*   the SYN syntax, and have names SYN_CHSYN_xxx, where XXX is the name of the
-*   syntax construction to parse.
+*   input matched the expected syntax and the end of error resparse was not
+*   encountered.
+*
+*   These routines are specific to parsing the SYN syntax, and have names
+*   SYN_CHSYN_xxx, where XXX is the name of the syntax construction to parse.
+*   The SYN library is guaranteed to not create other routines with names
+*   SYN_CHSYN_xxx.
 }
 function syn_chsyn_command (           {parse one SYN command, or end of data}
   in out  syn: syn_t)                  {SYN library use state}

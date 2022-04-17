@@ -67,7 +67,7 @@ begin
       (syn.parse_p^.pos.ind = syn.pos_err.ind)
       then begin
     syn.err_end := true;               {indicate the error char has been reached}
-    syn_p_ichar := syn_ichar_inv_k;    {return invalid character}
+    syn_p_ichar := syn_ichar_err_k;    {return end of error reparse special char}
     return;
     end;
 {

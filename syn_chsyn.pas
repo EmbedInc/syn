@@ -57,6 +57,7 @@ ord('/'): begin                        {possible start of comment}
           then goto done;
         while true do begin            {consume chars to end of line}
           if syn_p_ichar(syn) = syn_ichar_eol_k then exit; {found EOL ?}
+          if syn.err_end then return;
           end;
         end;
 otherwise
@@ -96,13 +97,13 @@ otherwise
     match := false;
     end;
   if syn.err_end then return;          {end of error re-parse ?}
+
   syn_p_cpos_pop (syn, match);
   if not match then goto leave;
 
   match := syn_chsyn_pad (syn);
 
 leave:
-  if syn.err_end then return;
   syn_chsyn_space := match;
   end;
 {
@@ -302,11 +303,13 @@ begin
 
   syn_p_tag_start (syn, 1);            {start tag for INTEGER}
   match := syn_chsyn_integer (syn);
+  if syn.err_end then return;
   syn_p_tag_end (syn, match);
   if match then goto leave;
 
   syn_p_tag_start (syn, 2);            {start tag for "inf"}
   match := syn_p_test_string (syn, 'inf', 3);
+  if syn.err_end then return;
   syn_p_tag_end (syn, match);
 
 leave:

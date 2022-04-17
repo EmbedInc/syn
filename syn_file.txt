@@ -1,5 +1,5 @@
                   Syntaxer Definition File Specification
-                             27 February 2022
+                              17 April 2022
 
 The Embed syntaxer parses a collection of text lines according to a
 user-defined syntax.  A syntax tree is built from the input lines.  An
@@ -25,7 +25,7 @@ Commands
   The syntax definition is organized as lines of text that are syntaxer
   commands.  These commands start in column 1 with a dot, followed
   immediately by the command name.  Command names and keywords are
-  case-insensitive, but are show in upper case in this document.  The
+  case-insensitive, but are shown in upper case in this document.  The
   commands are:
 
   .SYMBOL name[routine] EXTERNAL
@@ -123,8 +123,9 @@ Built-in syntax constructions
 
       ITEM may occur N to M times in succession.  N must be an integer 0
       or greater, represented by a string of decimal digits.  M can be the
-      same thing or the special keyword INF.  INF means there is no upper
-      limit on how many times the item may be repeated.
+      same thing or the special keyword INF.  INF stands for "infinite",
+      and means there is no upper limit on how many times the item may be
+      repeated.
 
     .OPTIONAL item
 
