@@ -244,7 +244,7 @@ function syn_trav_next_tag (           {to next entry, return its tag value}
   :sys_int_machine_t;                  {1-N tag number or SYN_TAG_xxx_K}
   val_param; extern;
 
-procedure syn_trav_pop (               {restore curr syntx tree pos from stack}
+procedure syn_trav_pop (               {restore curr syntax tree pos from stack}
   in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;
 
