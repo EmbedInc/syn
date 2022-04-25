@@ -249,7 +249,7 @@ var
   iq: sys_int_machine_t;               {quote character code}
 
 label
-  abort, leave;
+  leave;
 
 begin
   syn_chsyn_char := false;             {init to syntax did not match}
@@ -264,19 +264,13 @@ begin
   syn_p_tag_start (syn, 1);            {start tagged input string}
   ichar := syn_p_ichar (syn);          {get the char}
   if syn.err_end then return;          {end of error re-parse ?}
-  if                                   {not a valid quoted char ?}
-      (ichar = iq) or                  {is the end quote character ?}
-      (ichar < ord(' ')) or            {before valid range ?}
-      (ichar > ord('~'))               {after valid range ?}
-    then goto abort;
+  match := (ichar <> iq) and (ichar >= 0); {valid character ?}
+  syn_p_tag_end (syn, match);          {end the tagged input string}
+  if not match then goto leave;
 
   ichar := syn_p_ichar (syn);          {get the end quote character}
   if syn.err_end then return;          {end of error re-parse ?}
-  if ichar <> iq then goto abort;      {not valid end quote ?}
-  match := true;                       {syntax matched}
-
-abort:                                 {abort to here when tag open}
-  syn_p_tag_end (syn, match);          {end the string body tag}
+  match := ichar = iq;                 {end quote char,  as expected ?}
 
 leave:
   syn_p_constr_end (syn, match);
