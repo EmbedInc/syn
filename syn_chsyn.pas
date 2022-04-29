@@ -26,7 +26,6 @@ define syn_chsyn_command;
 {
 ********************************************************************************
 }
-(*
 function syn_chsyn_pad (
   in out  syn: syn_t)
   :boolean;
@@ -65,11 +64,9 @@ done:
   syn_p_cpos_set (syn, spos);          {back to first char that didn't match}
   syn_chsyn_pad := true;               {always matches}
   end;
-*)
 {
 ********************************************************************************
 }
-(*
 function syn_chsyn_space (
   in out  syn: syn_t)
   :boolean;
@@ -103,7 +100,6 @@ otherwise
 leave:
   syn_chsyn_space := match;
   end;
-*)
 {
 ********************************************************************************
 }

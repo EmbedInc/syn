@@ -1,7 +1,7 @@
 /*   Syntax definition of the syntax definition language.
 /*
-.symbol pad[syn_chsyn_pad]
-.symbol space[syn_chsyn_space]
+.symbol pad[syn_chsyn_pad] external
+.symbol space[syn_chsyn_space] external
 .symbol integer[syn_chsyn_integer]
 .symbol symbol[syn_chsyn_symbol]
 .symbol end_range[syn_chsyn_end_range]
@@ -14,17 +14,17 @@
 .symbol declare[syn_chsyn_declare]
 .symbol command[syn_chsyn_command]
 
-.define PAD .as
-  .occurs [0 to INF] (
-    ' '
-    .or .EOL
-    .or .EOF
-    .or ('/*' .occurs [0 to INF] .range [' ' thru '~'] .EOL)
-    )
+/* .define PAD .as
+/*   .occurs [0 to INF] (
+/*     ' '
+/*     .or .EOL
+/*     .or .EOF
+/*     .or ('/*' .occurs [0 to INF] .range [' ' thru '~'] .EOL)
+/*     )
 
-.define SPACE .as
-  (' ' .or .eol)
-  pad
+/* .define SPACE .as
+/*   (' ' .or .eol)
+/*   pad
 
 .define INTEGER .as
   .occurs [1 to INF] .range ['0' thru '9']
