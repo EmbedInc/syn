@@ -8,7 +8,7 @@
 .symbol char[syn_chsyn_char] external
 .symbol string[syn_chsyn_string] external
 .symbol untagged_item[syn_chsyn_untagged_item] external
-.symbol item[syn_chsyn_item] external
+.symbol item[syn_chsyn_item]
 .symbol expression[syn_chsyn_expression]
 .symbol define[syn_chsyn_define]
 .symbol declare[syn_chsyn_declare]
@@ -75,10 +75,10 @@
 /*   .or ('.optional' space item[13])
 /*   .or symbol[3]
 /*   .or string[4]
-/*
-/* .define ITEM .as
-/*   untagged_item
-/*   ('[' integer[1] ']') .or .null[2]
+
+.define ITEM .as
+  untagged_item
+  ('[' integer[1] ']') .or .null[2]
 
 .define EXPRESSION .as
   item
