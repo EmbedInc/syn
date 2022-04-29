@@ -643,6 +643,7 @@ leave:
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_expression (
   in out  syn: syn_t)
   :boolean;
@@ -701,6 +702,7 @@ leave:
   syn_p_constr_end (syn, match);
   syn_chsyn_expression := match;
   end;
+*)
 {
 ********************************************************************************
 }

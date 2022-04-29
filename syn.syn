@@ -9,7 +9,7 @@
 .symbol string[syn_chsyn_string] external
 .symbol untagged_item[syn_chsyn_untagged_item] external
 .symbol item[syn_chsyn_item] external
-.symbol expression[syn_chsyn_expression] external
+.symbol expression[syn_chsyn_expression]
 .symbol define[syn_chsyn_define]
 .symbol declare[syn_chsyn_declare]
 .symbol command[syn_chsyn_command]
@@ -80,14 +80,14 @@
 /*   untagged_item
 /*   ('[' integer[1] ']') .or .null[2]
 
-/* .define EXPRESSION .as
-/*   item
-/*   (
-/*     space
-/*     ('.or' space expression[2])
-/*     .or expression[1]
-/*     )
-/*   .or .null[3]
+.define EXPRESSION .as
+  item
+  (
+    space
+    ('.or' space expression[2])
+    .or expression[1]
+    )
+  .or .null[3]
 
 .define DEFINE .as
   '.define' space symbol[1] space '.as' space expression[1]

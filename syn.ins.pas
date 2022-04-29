@@ -3,7 +3,7 @@
 *   formal syntax definition.
 *
 *   To use the syntaxer, the syntax definition file is compiled to executable
-*   code in a linkable library.  This is done by the SST program, taking the
+*   code in a linkable library.  This is done by the SYN program, taking the
 *   syntax definition file (.syn) as input.  The application that interprets the
 *   syntax is then linked with the resulting binary.  The application calls
 *   routines in the SYN library to cause the input text to be parsed and a
