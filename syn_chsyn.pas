@@ -311,6 +311,7 @@ leave:
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_untagged_item (
   in out  syn: syn_t)
   :boolean;
@@ -593,6 +594,7 @@ leave:
   syn_p_constr_end (syn, match);
   syn_chsyn_untagged_item := match;
   end;
+*)
 {
 ********************************************************************************
 }

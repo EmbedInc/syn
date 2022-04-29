@@ -7,7 +7,7 @@
 .symbol end_range[syn_chsyn_end_range] external
 .symbol char[syn_chsyn_char] external
 .symbol string[syn_chsyn_string] external
-.symbol untagged_item[syn_chsyn_untagged_item] external
+.symbol untagged_item[syn_chsyn_untagged_item]
 .symbol item[syn_chsyn_item]
 .symbol expression[syn_chsyn_expression]
 .symbol define[syn_chsyn_define]
@@ -58,23 +58,23 @@
 /* .define END_RANGE .as
 /*   integer[1] .or 'inf'[2]
 
-/* .define UNTAGGED_ITEM .as
-/*   ('(' pad expression[7] pad ')')
-/*   .or '.eol'[1]
-/*   .or '.eof'[2]
-/*   .or '.eod'[12]
-/*   .or ('.range' pad '[' pad char[1] space 'thru' space char[1] pad ']')[5]
-/*   .or ('.occurs' pad '[' pad integer[1] space 'to' space end_range pad ']'
-/*     space item)[6]
-/*   .or ('.charcase' pad '[' pad
-/*     ('upper'[1] .or 'lower'[2] .or 'off'[3])
-/*     pad ']')[8]
-/*   .or ('.upto'[10] space item)
-/*   .or ('.not'[11] space item)
-/*   .or '.null'[9]
-/*   .or ('.optional' space item[13])
-/*   .or symbol[3]
-/*   .or string[4]
+.define UNTAGGED_ITEM .as
+  ('(' pad expression[7] pad ')')
+  .or '.eol'[1]
+  .or '.eof'[2]
+  .or '.eod'[12]
+  .or ('.range' pad '[' pad char[1] space 'thru' space char[1] pad ']')[5]
+  .or ('.occurs' pad '[' pad integer[1] space 'to' space end_range pad ']'
+    space item)[6]
+  .or ('.charcase' pad '[' pad
+    ('upper'[1] .or 'lower'[2] .or 'off'[3])
+    pad ']')[8]
+  .or ('.upto'[10] space item)
+  .or ('.not'[11] space item)
+  .or '.null'[9]
+  .or ('.optional' space item[13])
+  .or symbol[3]
+  .or string[4]
 
 .define ITEM .as
   untagged_item
