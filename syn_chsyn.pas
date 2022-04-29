@@ -1,41 +1,36 @@
-{   Syntax parsing routines for the SYN syntax definition file syntax.  The SYN
-*   syntax definition file format is described in the SYN_FILE help file.
+{   Manually-written syntax parsing routines for the SYN syntax.  The SYN syntax
+*   parsing routines are defined here and described in the SYN.SYN file.  The
+*   SYN.SYN file is processed to create the automatically-written SYN syntax
+*   parsing routines in SYN.C.  The routines in SYN.C are therefore functional
+*   duplicates to the ones here.
 *
-*   The routines here would normally be created by compiling the SYN.SYN syntax
-*   definition file.  However, there is a circular problem because that requires
-*   parsing that file, which requires the result of compiling it.  This module
-*   was originally hand-written to implement the minimum syntax that SYN.SYN
-*   adheres to.  Once the whole system is up and running, some routines will be
-*   replaced with the ones automatically generated from the SYN syntax file.
-*
-*   All the routines here are named SYN_CHSYN_name.  Such names are guaranteed
-*   to not be used elsewhere in the SYN library, and are different from the
-*   names reserved for automatic generation of syntax parsing routines.
-*
-*   This module is included in the SYN library, but would not be linked with
-*   ordinary applications since there would be no references to SYN_CHSYN_xxx
-*   names.
+*   Only one version of each routine can be added to the library.  This is done
+*   by commenting out the syntax description for a routine in SYN.SYN, or
+*   commenting out its source code here.
 }
 module syn_chsyn;
+define syn_chsyn_pad;
+define syn_chsyn_space;
+define syn_chsyn_integer;
+define syn_chsyn_symbol;
+define syn_chsyn_end_range;
+define syn_chsyn_char;
+define syn_chsyn_string;
+define syn_chsyn_untagged_item;
+define syn_chsyn_item;
+define syn_chsyn_expression;
+define syn_chsyn_define;
+define syn_chsyn_declare;
 define syn_chsyn_command;
 %include 'syn2.ins.pas';
-
-function syn_chsyn_expression (
-  in out  syn: syn_t)
-  :boolean;
-  val_param; forward;
-
-function syn_chsyn_item (
-  in out  syn: syn_t)
-  :boolean;
-  val_param; forward;
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_pad (
   in out  syn: syn_t)
   :boolean;
-  val_param; internal;
+  val_param;
 
 var
   spos: fline_cpos_t;                  {saved input stream position}
@@ -70,13 +65,15 @@ done:
   syn_p_cpos_set (syn, spos);          {back to first char that didn't match}
   syn_chsyn_pad := true;               {always matches}
   end;
+*)
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_space (
   in out  syn: syn_t)
   :boolean;
-  val_param; internal;
+  val_param;
 
 var
   match: boolean;                      {syntax matched}
@@ -106,13 +103,14 @@ otherwise
 leave:
   syn_chsyn_space := match;
   end;
+*)
 {
 ********************************************************************************
 }
 function syn_chsyn_integer (
   in out  syn: syn_t)
   :boolean;
-  val_param; internal;
+  val_param;
 
 var
   n: sys_int_machine_t;                {number of characters}
@@ -146,7 +144,7 @@ begin
 function syn_chsyn_symbol (
   in out  syn: syn_t)
   :boolean;
-  val_param; internal;
+  val_param;
 
 var
   ichar: sys_int_machine_t;            {character code}
@@ -191,7 +189,7 @@ leave:                                 {common exit, MATCH all set}
 function syn_chsyn_string (
   in out  syn: syn_t)
   :boolean;
-  val_param; internal;
+  val_param;
 
 var
   match: boolean;                      {syntax matched}
@@ -241,7 +239,7 @@ leave:                                 {end syntax construction and return}
 function syn_chsyn_char (
   in out  syn: syn_t)
   :boolean;
-  val_param; internal;
+  val_param;
 
 var
   match: boolean;                      {syntax matched}
@@ -282,7 +280,7 @@ leave:
 function syn_chsyn_end_range (
   in out  syn: syn_t)
   :boolean;
-  val_param; internal;
+  val_param;
 
 var
   match: boolean;                      {syntax matched}
@@ -316,7 +314,7 @@ leave:
 function syn_chsyn_untagged_item (
   in out  syn: syn_t)
   :boolean;
-  val_param; internal;
+  val_param;
 
 var
   match: boolean;                      {syntax matched}
@@ -706,10 +704,11 @@ leave:
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_define (
   in out  syn: syn_t)
   :boolean;
-  val_param; internal;
+  val_param;
 
 var
   match: boolean;                      {syntax matched}
@@ -750,13 +749,15 @@ leave:
   syn_p_constr_end (syn, match);
   syn_chsyn_define := match;
   end;
+*)
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_declare (
   in out  syn: syn_t)
   :boolean;
-  val_param; internal;
+  val_param;
 
 var
   match: boolean;                      {syntax matched}
@@ -820,9 +821,11 @@ leave:
   syn_p_constr_end (syn, match);
   syn_chsyn_declare := match;
   end;
+*)
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_command (
   in out  syn: syn_t)
   :boolean;
@@ -866,3 +869,4 @@ leave:
   syn_p_constr_end (syn, match);
   syn_chsyn_command := match;
   end;
+*)

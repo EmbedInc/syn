@@ -24,6 +24,8 @@ call src_pas %srcdir% %libname%_stack
 call src_pas %srcdir% %libname%_trav
 call src_pas %srcdir% %libname%_tree
 
+call src_c %srcdir% syn
+
 call src_lib %srcdir% %libname%
 call src_msg %srcdir% %libname%
 call src_doc syn_file

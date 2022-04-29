@@ -453,8 +453,73 @@ function syn_p_test_string (           {check input for matching string}
 *   SYN_CHSYN_xxx, where XXX is the name of the syntax construction to parse.
 *   The SYN library is guaranteed to not create other routines with names
 *   SYN_CHSYN_xxx.
+*
+*   Top level function:
 }
 function syn_chsyn_command (           {parse one SYN command, or end of data}
   in out  syn: syn_t)                  {SYN library use state}
   :boolean;                            {TRUE iff input matched expected syntax}
+  val_param; extern;
+{
+*   Remaining functions that should only be called indirectly by a top level
+*   funtion.
+}
+function syn_chsyn_pad (
+  in out  syn: syn_t)
+  :boolean;
+  val_param; extern;
+
+function syn_chsyn_space (
+  in out  syn: syn_t)
+  :boolean;
+  val_param; extern;
+
+function syn_chsyn_integer (
+  in out  syn: syn_t)
+  :boolean;
+  val_param; extern;
+
+function syn_chsyn_symbol (
+  in out  syn: syn_t)
+  :boolean;
+  val_param; extern;
+
+function syn_chsyn_string (
+  in out  syn: syn_t)
+  :boolean;
+  val_param; extern;
+
+function syn_chsyn_char (
+  in out  syn: syn_t)
+  :boolean;
+  val_param; extern;
+
+function syn_chsyn_end_range (
+  in out  syn: syn_t)
+  :boolean;
+  val_param; extern;
+
+function syn_chsyn_untagged_item (
+  in out  syn: syn_t)
+  :boolean;
+  val_param; extern;
+
+function syn_chsyn_item (
+  in out  syn: syn_t)
+  :boolean;
+  val_param; extern;
+
+function syn_chsyn_expression (
+  in out  syn: syn_t)
+  :boolean;
+  val_param; extern;
+
+function syn_chsyn_define (
+  in out  syn: syn_t)
+  :boolean;
+  val_param; extern;
+
+function syn_chsyn_declare (
+  in out  syn: syn_t)
+  :boolean;
   val_param; extern;
