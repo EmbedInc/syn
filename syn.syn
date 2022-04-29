@@ -2,11 +2,11 @@
 /*
 .symbol pad[syn_chsyn_pad]
 .symbol space[syn_chsyn_space]
-.symbol integer[syn_chsyn_integer] external
-.symbol symbol[syn_chsyn_symbol] external
-.symbol end_range[syn_chsyn_end_range] external
-.symbol char[syn_chsyn_char] external
-.symbol string[syn_chsyn_string] external
+.symbol integer[syn_chsyn_integer]
+.symbol symbol[syn_chsyn_symbol]
+.symbol end_range[syn_chsyn_end_range]
+.symbol char[syn_chsyn_char]
+.symbol string[syn_chsyn_string]
 .symbol untagged_item[syn_chsyn_untagged_item]
 .symbol item[syn_chsyn_item]
 .symbol expression[syn_chsyn_expression]
@@ -26,37 +26,37 @@
   (' ' .or .eol)
   pad
 
-/* .define INTEGER .as
-/*   .occurs [1 to INF] .range ['0' thru '9']
-/*
-/* .define SYMBOL .as
-/*   .range ['a' thru 'z']
-/*   .occurs [0 to 31] (
-/*     .range ['a' thru 'z']
-/*     .or .range ['0' thru '9']
-/*     .or '_'
-/*     .or '$'
-/*     )
+.define INTEGER .as
+  .occurs [1 to INF] .range ['0' thru '9']
 
-/* .define CHAR .as
-/*       ("'" (.range [' ' thru '&'] .or .range ['(' thru '~'])[1] "'")
-/*   .or ('"' (.range [' ' thru '!'] .or .range ['#' thru '~'])[1] '"')
+.define SYMBOL .as
+  .range ['a' thru 'z']
+  .occurs [0 to 31] (
+    .range ['a' thru 'z']
+    .or .range ['0' thru '9']
+    .or '_'
+    .or '$'
+    )
 
-/* .define STRING .as
-/*   (
-/*     "'"
-/*     (.occurs [0 to INF] (.range [' ' thru '&'] .or .range ['(' thru '~']))[1]
-/*     "'"
-/*     )
-/*   .or
-/*   (
-/*     '"'
-/*     (.occurs [0 to INF] (.range [' ' thru '!'] .or .range ['#' thru '~']))[1]
-/*     '"'
-/*     )
+.define CHAR .as
+      ("'" (.range [' ' thru '&'] .or .range ['(' thru '~'])[1] "'")
+  .or ('"' (.range [' ' thru '!'] .or .range ['#' thru '~'])[1] '"')
 
-/* .define END_RANGE .as
-/*   integer[1] .or 'inf'[2]
+.define STRING .as
+  (
+    "'"
+    (.occurs [0 to INF] (.range [' ' thru '&'] .or .range ['(' thru '~']))[1]
+    "'"
+    )
+  .or
+  (
+    '"'
+    (.occurs [0 to INF] (.range [' ' thru '!'] .or .range ['#' thru '~']))[1]
+    '"'
+    )
+
+.define END_RANGE .as
+  integer[1] .or 'inf'[2]
 
 .define UNTAGGED_ITEM .as
   ('(' pad expression[7] pad ')')

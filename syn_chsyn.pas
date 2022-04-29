@@ -107,6 +107,7 @@ leave:
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_integer (
   in out  syn: syn_t)
   :boolean;
@@ -138,9 +139,11 @@ begin
   syn_p_constr_end (syn, match);
   syn_chsyn_integer := match;
   end;
+*)
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_symbol (
   in out  syn: syn_t)
   :boolean;
@@ -183,9 +186,11 @@ leave:                                 {common exit, MATCH all set}
   syn_p_constr_end (syn, match);
   syn_chsyn_symbol := match;
   end;
+*)
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_string (
   in out  syn: syn_t)
   :boolean;
@@ -233,9 +238,11 @@ leave:                                 {end syntax construction and return}
   syn_p_constr_end (syn, match);
   syn_chsyn_string := match;
   end;
+*)
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_char (
   in out  syn: syn_t)
   :boolean;
@@ -274,9 +281,11 @@ leave:
   syn_p_constr_end (syn, match);
   syn_chsyn_char := match;
   end;
+*)
 {
 ********************************************************************************
 }
+(*
 function syn_chsyn_end_range (
   in out  syn: syn_t)
   :boolean;
@@ -308,6 +317,7 @@ leave:
   syn_p_constr_end (syn, match);
   syn_chsyn_end_range := match;
   end;
+*)
 {
 ********************************************************************************
 }
