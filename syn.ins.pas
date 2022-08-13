@@ -328,7 +328,7 @@ procedure syn_msg_pos_bomb (           {show input stream pos at curr tree entry
 procedure syn_msg_tag_bomb (           {unexpected tag, show error and bomb}
   in out  syn: syn_t;                  {SYN library use state}
   in      subsys: string;              {name of subsystem, used to find message file}
-  in      msg: string;                 {message name withing subsystem file}
+  in      msg: string;                 {message name within subsystem file}
   in      parms: univ sys_parm_msg_ar_t; {array of parameter descriptors}
   in      nparms: sys_int_machine_t);  {number of parameters in PARMS}
   options (val_param, noreturn, extern);
@@ -336,7 +336,7 @@ procedure syn_msg_tag_bomb (           {unexpected tag, show error and bomb}
 procedure syn_msg_tag_err (            {unexpected tag from curr entry, show error}
   in out  syn: syn_t;                  {SYN library use state}
   in      subsys: string;              {name of subsystem, used to find message file}
-  in      msg: string;                 {message name withing subsystem file}
+  in      msg: string;                 {message name within subsystem file}
   in      parms: univ sys_parm_msg_ar_t; {array of parameter descriptors}
   in      nparms: sys_int_machine_t);  {number of parameters in PARMS}
   val_param; extern;
@@ -388,7 +388,7 @@ procedure syn_p_constr_start (         {starting to parse a new syntax construct
 
 procedure syn_p_cpos_get (             {get the current parsing character position}
   in out  syn: syn_t;                  {SYN library use state}
-  out     pos: fline_cpos_t);          {returned pasing position}
+  out     pos: fline_cpos_t);          {returned parsing position}
   val_param; extern;
 
 procedure syn_p_cpos_pop (             {pop input character position from parse stack}
