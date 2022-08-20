@@ -296,6 +296,10 @@ procedure syn_dbg_tree_internal (      {show syntax tree, internal details}
   val_param; extern;
 
 procedure syn_dbg_tree_show (          {show syntax tree, user-level details}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_dbg_tree_show_n (        {show syntax tree, user-level details}
   in out  syn: syn_t;                  {SYN library use state}
   out     nent: sys_int_machine_t);    {number of syntax tree entries found}
   val_param; extern;

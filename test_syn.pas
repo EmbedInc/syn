@@ -135,7 +135,7 @@ done_opts:                             {done with all the command line options}
       ;
 
     syn_trav_init (syn_p^);            {init for traversing the syntax tree}
-    syn_dbg_tree_show (syn_p^, nent);  {show tree, get number of entries}
+    syn_dbg_tree_show_n (syn_p^, nent); {show tree, get number of entries}
 
     writeln;
     string_f_fp_eng (                  {make amount of memory used string}

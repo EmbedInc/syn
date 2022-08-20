@@ -2,6 +2,7 @@
 }
 module syn_dbg;
 define syn_dbg_tree_internal;
+define syn_dbg_tree_show_n;
 define syn_dbg_tree_show;
 %include 'syn2.ins.pas';
 {
@@ -147,11 +148,11 @@ begin
 {
 ********************************************************************************
 *
-*   Subroutine SYN_DBG_TREE_SHOW (SYN)
+*   Subroutine SYN_DBG_TREE_SHOW_N (SYN, NENT)
 *
 *   Show the syntax tree with user-level information from the current position.
 }
-procedure syn_dbg_tree_show (          {show syntax tree, user-level details}
+procedure syn_dbg_tree_show_n (        {show syntax tree, user-level details}
   in out  syn: syn_t;                  {SYN library use state}
   out     nent: sys_int_machine_t);    {number of syntax tree entries found}
   val_param;
@@ -270,4 +271,21 @@ begin
   show_level;                          {show this level and everything below it}
 
   syn_trav_pop (syn);                  {restore original syntax tree position}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_DBG_TREE_SHOW (SYN)
+*
+*   Show the syntax tree with user-level information from the current position.
+}
+procedure syn_dbg_tree_show (          {show syntax tree, user-level details}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param;
+
+var
+  nent: sys_int_machine_t;             {number of syntax tree entries found}
+
+begin
+  syn_dbg_tree_show_n (syn, nent);
   end;
