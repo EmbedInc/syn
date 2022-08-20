@@ -291,6 +291,15 @@ function syn_trav_up (                 {pop up to parent syntax tree level}
 *   Routines for writing error and other messages encountered while traversing
 *   the syntax tree.
 }
+procedure syn_dbg_tree_internal (      {show syntax tree, internal details}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_dbg_tree_show (          {show syntax tree, user-level details}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     nent: sys_int_machine_t);    {number of syntax tree entries found}
+  val_param; extern;
+
 procedure syn_error (                  {show msg and curr position on error}
   in out  syn: syn_t;                  {SYN library use state}
   in      stat: sys_err_t;             {error status}
@@ -366,10 +375,6 @@ procedure syn_pos_show (               {show input stream pos at curr tree entry
 *   was called, and the syntax tree has not changed.  FALSE is also returned when
 *   end of error re-parse is encountered.
 }
-procedure syn_dbg_tree (               {show syntax tree on STDOUT, for debugging}
-  in out  syn: syn_t);                 {SYN library use state}
-  val_param; extern;
-
 procedure syn_p_charcase (             {set charcase handling, restored at constr end}
   in out  syn: syn_t;                  {SYN library use state}
   in      ccase: syn_charcase_k_t);    {the new input stream character case handling}

@@ -22,7 +22,6 @@ var
   fline_p: fline_p_t;                  {to FLINE library use state}
   coll_p: fline_coll_p_t;              {the input file lines in FLINE collection}
   syn_p: syn_p_t;                      {so SYN library use state}
-  tabort: boolean;                     {abort processing syntax tree}
   nent: sys_int_machine_t;             {number of syntax tree entries found}
   match: boolean;                      {syntax matched}
 
@@ -37,133 +36,7 @@ var
 
 label
   next_opt, err_parm, parm_bad, done_opts;
-{
-********************************************************************************
-*
-*   Local subroutine INDENT (LEVEL)
-*
-*   Indent the start of a new line according to the nesting level.  Level 0
-*   starts in column 1.  Each level lower is indented an additional 2 spaces.
-*   This routine writes blanks to STDOUT according to the nesting level.  The
-*   line is not ended.
-}
-procedure indent (                     {indent new line according to nesting level}
-  in      level: sys_int_machine_t);   {0-N level below top}
-  val_param; internal;
 
-var
-  ii: sys_int_machine_t;               {loop counter}
-
-begin
-  if level <= 0 then return;           {don't indent at all ?}
-  write ('  ');                        {indent the first level}
-  for ii := 2 to level do begin        {once for each remaining level}
-    write ('. ');
-    end;
-  end;
-{
-********************************************************************************
-*
-*   Local subroutine SHOW_LEVEL
-*
-*   Traverse and show the current syntax tree level.  The current syntax tree
-*   position should be at the start of the level to show.
-}
-procedure show_level;
-  val_param; internal;
-
-var
-  level: sys_int_machine_t;            {nesting level, 0 at top}
-  name: string_var32_t;                {name of this syntax level}
-  tent: syn_tent_k_t;                  {syntax tree entry type}
-  tagid: sys_int_machine_t;            {ID of current tag}
-  cpos: fline_cpos_t;                  {scratch input string character position}
-  tagstr: string_var80_t;              {tagged string}
-
-label
-  loop_ent;
-
-begin
-  name.max := size_char(name.str);     {init local var strings}
-  tagstr.max := size_char(tagstr.str);
-
-  level := syn_trav_level (syn_p^);    {get nesting level here}
-  syn_trav_level_name (syn_p^, name);  {get the name of this level}
-
-  if level = 0
-    then begin
-      writeln ('level 0');
-      end
-    else begin
-      writeln (name.str:name.len, ', level ', level);
-      end
-    ;
-
-loop_ent:                              {back here to get each new entry}
-  if tabort then return;               {tree traversal already aborted ?}
-  tent := syn_trav_next (syn_p^);      {to next entry, get its type ID}
-  if tent <> syn_tent_end_k then begin
-    nent := nent + 1;                  {count one more syntax tree entry}
-    end;
-  case tent of                         {what type of entry is this ?}
-syn_tent_err_k: begin                  {error end of syntax tree}
-      indent (level);
-      writeln ('Error end');
-      tabort := true;                  {abort tree traversal}
-      return;
-      end;
-syn_tent_end_k: begin                  {normal end of this level}
-      indent (level);
-      if level <= 0 then begin
-        writeln ('End of syntax tree');
-        return;
-        end;
-      writeln ('End of level');
-      if not syn_trav_up (syn_p^) then begin {failed to pop to parent level ?}
-        indent (level);
-        writeln ('Failure on popping to parent level');
-        tabort := true;
-        end;
-      return;
-      end;
-syn_tent_sub_k: begin                  {subordinate level}
-      indent (level);
-      if not syn_trav_down (syn_p^) then begin {failed to go down to sub level ?}
-        indent (level);
-        writeln ('Failed to enter sub level');
-        tabort := true;
-        return;
-        end;
-      nent := nent + 1;                {count one more syntax tree entry}
-      show_level;                      {show the subordinate level}
-      end;
-syn_tent_tag_k: begin                  {tagged source string}
-      tagid := syn_trav_tag (syn_p^);  {get tag ID}
-      syn_trav_tag_start (syn_p^, cpos); {get tagged string start position}
-      syn_trav_tag_string (syn_p^, tagstr); {get tagged string}
-      indent (level);
-      write ('Tag ', tagid, ', ');
-      if cpos.line_p = nil
-        then begin
-          writeln ('EOD');
-          end
-        else begin
-          writeln ('line ', cpos.line_p^.lnum, ' col ', cpos.ind,
-            ' "', tagstr.str:tagstr.len, '"');
-          end
-        ;
-      end;
-otherwise
-    indent (level);
-    writeln ('Unexpected entry with type ID ', ord(tent));
-    end;
-  goto loop_ent;
-  end;
-{
-********************************************************************************
-*
-*   Start of main routine.
-}
 begin
   writeln ('Program TEST_SYN, built on ', build_dtm_str);
   writeln;
@@ -262,9 +135,7 @@ done_opts:                             {done with all the command line options}
       ;
 
     syn_trav_init (syn_p^);            {init for traversing the syntax tree}
-    tabort := false;                   {init to not abort syntax tree processing}
-    nent := 1;                         {init number of syntax tree entries found}
-    show_level;                        {show the current syntax tree level}
+    syn_dbg_tree_show (syn_p^, nent);  {show tree, get number of entries}
 
     writeln;
     string_f_fp_eng (                  {make amount of memory used string}

@@ -1,7 +1,8 @@
 {   Routines intended for debugging and development with the SYN library.
 }
 module syn_dbg;
-define syn_dbg_tree;
+define syn_dbg_tree_internal;
+define syn_dbg_tree_show;
 %include 'syn2.ins.pas';
 {
 ********************************************************************************
@@ -30,17 +31,24 @@ begin
 *
 *   Local subroutine INDENT (LEVEL)
 *
-*   Indent from the start of the line appropriate for the indicated nesting
-*   level.
+*   Indent the start of a new line according to the nesting level.  Level 0
+*   starts in column 1.  Each level lower is indented an additional 2 spaces.
+*   This routine writes blanks to STDOUT according to the nesting level.  The
+*   line is not ended.
 }
-procedure indent (                     {indent for a specific nesting level}
-  in      level: sys_int_machine_t);   {0-N nesting level}
+procedure indent (                     {indent new line according to nesting level}
+  in      level: sys_int_machine_t);   {0-N level below top}
   val_param; internal;
 
-begin
-  if level <= 0 then return;           {at top level, no indentation ?}
+var
+  ii: sys_int_machine_t;               {loop counter}
 
-  write (' ':(level * 2));             {indent according to the level}
+begin
+  if level <= 0 then return;           {don't indent at all ?}
+  write ('  ');                        {indent the first level}
+  for ii := 2 to level do begin        {once for each remaining level}
+    write ('. ');
+    end;
   end;
 {
 ********************************************************************************
@@ -123,16 +131,143 @@ syn_ttype_sub_k: begin                 {this entry links to subordinate level ?}
 {
 ********************************************************************************
 *
-*   Subroutine SYN_DBG_TREE (SYN)
+*   Subroutine SYN_DBG_TREE_INTERNAL (SYN)
 *
 *   Show the current syntax tree on standard output.  The low 16 bits of
 *   addresses are shown in hexadecimal to help correlate the output with data
 *   visible in the debugger.
 }
-procedure syn_dbg_tree (               {show syntax tree on STDOUT, for debugging}
+procedure syn_dbg_tree_internal (      {show syntax tree, internal details}
   in out  syn: syn_t);                 {SYN library use state}
   val_param;
 
 begin
   show_level (syn.sytree_p, 0);        {show top level and everything below it}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_DBG_TREE_SHOW (SYN)
+*
+*   Show the syntax tree with user-level information from the current position.
+}
+procedure syn_dbg_tree_show (          {show syntax tree, user-level details}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     nent: sys_int_machine_t);    {number of syntax tree entries found}
+  val_param;
+
+var
+  tabort: boolean;                     {abort processing syntax tree}
+{
+****************************************
+*
+*   Internal subroutine SHOW_LEVEL
+*   This routine is internal to SYN_DBG_TREE_SHOW.
+*
+*   Traverse and show the current syntax tree level.  The current syntax tree
+*   position should be at the start of the level to show.
+}
+procedure show_level;
+  val_param; internal;
+
+var
+  level: sys_int_machine_t;            {nesting level, 0 at top}
+  name: string_var32_t;                {name of this syntax level}
+  tent: syn_tent_k_t;                  {syntax tree entry type}
+  tagid: sys_int_machine_t;            {ID of current tag}
+  cpos: fline_cpos_t;                  {scratch input string character position}
+  tagstr: string_var80_t;              {tagged string}
+
+label
+  loop_ent;
+
+begin
+  name.max := size_char(name.str);     {init local var strings}
+  tagstr.max := size_char(tagstr.str);
+
+  level := syn_trav_level (syn);       {get nesting level here}
+  syn_trav_level_name (syn, name);     {get the name of this level}
+
+  if level = 0
+    then begin
+      writeln ('level 0');
+      end
+    else begin
+      writeln (name.str:name.len, ', level ', level);
+      end
+    ;
+
+loop_ent:                              {back here to get each new entry}
+  if tabort then return;               {tree traversal already aborted ?}
+  tent := syn_trav_next (syn);         {to next entry, get its type ID}
+  if tent <> syn_tent_end_k then begin
+    nent := nent + 1;                  {count one more syntax tree entry}
+    end;
+  case tent of                         {what type of entry is this ?}
+syn_tent_err_k: begin                  {error end of syntax tree}
+      indent (level);
+      writeln ('Error end');
+      tabort := true;                  {abort tree traversal}
+      return;
+      end;
+syn_tent_end_k: begin                  {normal end of this level}
+      indent (level);
+      if level <= 0 then begin
+        writeln ('End of syntax tree');
+        return;
+        end;
+      writeln ('End of level');
+      if not syn_trav_up (syn) then begin {failed to pop to parent level ?}
+        indent (level);
+        writeln ('Failure on popping to parent level');
+        tabort := true;
+        end;
+      return;
+      end;
+syn_tent_sub_k: begin                  {subordinate level}
+      indent (level);
+      if not syn_trav_down (syn) then begin {failed to go down to sub level ?}
+        indent (level);
+        writeln ('Failed to enter sub level');
+        tabort := true;
+        return;
+        end;
+      nent := nent + 1;                {count one more syntax tree entry}
+      show_level;                      {show the subordinate level}
+      end;
+syn_tent_tag_k: begin                  {tagged source string}
+      tagid := syn_trav_tag (syn);     {get tag ID}
+      syn_trav_tag_start (syn, cpos);  {get tagged string start position}
+      syn_trav_tag_string (syn, tagstr); {get tagged string}
+      indent (level);
+      write ('Tag ', tagid, ', ');
+      if cpos.line_p = nil
+        then begin
+          writeln ('EOD');
+          end
+        else begin
+          writeln ('line ', cpos.line_p^.lnum, ' col ', cpos.ind,
+            ' "', tagstr.str:tagstr.len, '"');
+          end
+        ;
+      end;
+otherwise
+    indent (level);
+    writeln ('Unexpected entry with type ID ', ord(tent));
+    end;
+  goto loop_ent;
+  end;
+{
+****************************************
+*
+*   Start of SYN_DBG_TREE_SHOW
+}
+begin
+  syn_trav_push (syn);                 {save original position on stack}
+
+  nent := 1;                           {init number of syntax tree entries found}
+  tabort := false;                     {init to not abort syntax tree processing}
+  show_level;                          {show this level and everything below it}
+
+  syn_trav_pop (syn);                  {restore original syntax tree position}
   end;
