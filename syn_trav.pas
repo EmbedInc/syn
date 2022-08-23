@@ -11,6 +11,7 @@ define syn_trav_level;
 define syn_trav_level_name;
 define syn_trav_tag;
 define syn_trav_next_tag;
+define syn_trav_pos;
 define syn_trav_tag_start;
 define syn_trav_tag_string;
 define syn_trav_save;
@@ -244,6 +245,22 @@ function syn_trav_next_tag (           {to next entry, return its tag value}
 begin
   discard( syn_trav_next (syn) );      {go to next syn tree entry, if present}
   syn_trav_next_tag := syn_trav_tag (syn); {return tag for this new entry}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_TRAV_POS (SYN, POS)
+*
+*   Get the source code starting positition associated with the current syntax
+*   tree entry.
+}
+procedure syn_trav_pos (               {get input stream pos for curr syn tree pos}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     pos: fline_cpos_t);          {returned input stream position}
+  val_param;
+
+begin
+  pos := syn.tent_p^.pos;              {return pos of curr tree entry}
   end;
 {
 ********************************************************************************

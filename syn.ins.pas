@@ -252,6 +252,11 @@ procedure syn_trav_popdel (            {pop syn tree pos from stack, stay curr p
   in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;
 
+procedure syn_trav_pos (               {get input stream pos for curr syn tree pos}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     pos: fline_cpos_t);          {returned input stream position}
+  val_param; extern;
+
 procedure syn_trav_push (              {save curr syntax tree pos on internal stack}
   in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;
