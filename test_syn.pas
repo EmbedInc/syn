@@ -21,7 +21,7 @@ var
   iname_set: boolean;                  {TRUE if the input file name already set}
   fline_p: fline_p_t;                  {to FLINE library use state}
   coll_p: fline_coll_p_t;              {the input file lines in FLINE collection}
-  syn_p: syn_p_t;                      {so SYN library use state}
+  syn_p: syn_p_t;                      {to SYN library use state}
   nent: sys_int_machine_t;             {number of syntax tree entries found}
   match: boolean;                      {syntax matched}
 
