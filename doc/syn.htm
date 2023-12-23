@@ -1,0 +1,139 @@
+<html lang="en-US">
+<head>
+  <link rel="stylesheet" href="document.css"></link>
+  <title>SYN</title>
+  </head>
+<body>
+
+<h1 class=page>Embed Syntaxer User's Guide</h1>
+<p class=page>Last updated 23 Dec 2023</p>
+
+
+<!-- -------------------------------------------------------------------------->
+<h1>Introduction</h1>
+
+<p>The Embed Inc syntaxer is a library and programs to help software parse
+and act on complex formal languages.  At a high level, the syntaxer
+provides these services:<ol>
+
+  <li>Validate an input stream as adhering to a syntax specification.
+
+  <li>Discard the syntax details that are no longer relevant once the
+  input stream is verified.
+
+  <li>Identify and pass on only the parts of the validated input stream
+  that must be acted upon, with syntax details stripped to the extent
+  possible.
+
+  </ol>
+
+<h2>Usage overview</h2><indent>
+
+  <p>The steps for the developer of an application to use the syntaxer are
+  briefly listed here.  Subsequent sections of this document go into
+  details.  At a high level, the steps for building an application to
+  parse complex syntax with the Embed syntaxer are:<ol>
+
+    <li>Define the syntax to parse using the SYN syntax language.  The SYN
+    syntax definition language is described in the <a
+    href="../syn_file.txt">syn_file</a> documentation file.  This step
+    amounts to writing a .syn file.
+
+    <li>Compile the SYN file.  This is done with the Embed <a
+    href="../../sst/sst.txt">SST</a> program, or the more specific <a
+    href="../../sst/syn.txt">SYN</a> program.  The result of this step is
+    C code that makes calls into the SYN library.  This code will parse
+    the input stream and build the resulting syntax tree specific to the
+    syntax definition it was compiled from.
+
+    <li>Compile the C file from the previous step to a relocatable object
+    file.  This object file will need to be linked with the application
+    when that application is built.
+
+    <li>Add calls to the application to capture the input stream, use the
+    SYN library to parse it, build the syntax tree, then traverse that
+    syntax tree and perform the specified actions.
+
+    <li>When the application is built, the compiled object resulting from
+    the SYN file must be linked in.  The SYN library, and various
+    additional Embed libraries used by SYN must also be statically linked
+    to the application.
+
+    </ol>
+
+  </p></indent>
+
+<h2>Components</h2><indent>
+
+  <p>The overall syntaxer facility includes various software components:
+
+  <h3>SYN library</h3><indent>
+
+    <p>The SYN library is the run-time component of the syntaxer.  It must
+    be linked to applications using the syntaxer.  Include files
+    specifying the run-time interface are provided in C and Embed Pascal.
+    The library provides procedural interfaces for:<ul>
+
+      <li>Starting and ending independent uses of the SYN library.  The
+      library supports multiple concurrent uses, each with its own state.
+
+      <li>Parsing a collection of input lines according to a syntax
+      definition, and building a syntax tree with the parts that are
+      tagged in the syntax definition to pass on to the application.
+
+      <li>Traversing the syntax tree, and retreiving the tagged items. The
+      original input stream text for each syntax tree element can be
+      identified and retrieved.
+
+      <li>Emitting error, debug, and other messages related to syntax tree
+      components, their location in the input stream, and appropriate
+      snippets from that input stream.
+
+      <li>Low level generic facilities used during parsing.  These are not
+      usually accessed by the appliction directly.  They are called by the
+      custom parsing code for a particular syntax.  This section of the
+      SYN library provides the interface expected by the code compiled
+      from the syntax definition file.
+
+        <p>In special cases, the application may create specific syntax
+        parsing routines "manually", by using these facilities directly
+        instead of implicitly via the custom-compiled syntax parsing code.
+
+      <li>Routines for parsing the SYN syntax definition language.  These
+      are mostly derived from the <a href="../syn.syn">SYN.SYN</a> syntax
+      definition file.  This file describes the SYN language syntax, using
+      the SYN language.
+
+      </ul>
+
+    </p></indent>
+
+  <h3>SST program</h3><indent>
+
+    <p><a href="../../sst/sst.txt">SST</a> is the Embed source-to-source
+    translator.  It is used to build C code from a syntax definition by
+    using the SYN front end and C back end.
+
+    </p></indent>
+
+  <h3>SYN program</h3><indent>
+
+    <p><a href="../../sst/syn.txt">SYN</a> is a custom version of SST that
+    only compiles SYN files to C source.  It is less flexible than SST,
+    but is all that is needed to create C source from syntax definition
+    files.  SYN is intended for convenience when the full features of SST
+    are not required.
+
+    </p></indent>
+
+  <h3>Other Embed libraries</h3><indent>
+
+    <p>The SYN library is layered on other Embed libraries that must also
+    be linked to the application.  These are SYS, UTIL, STRING, FILE, and
+    FLINE.
+
+    </p></indent>
+
+  </p></indent>
+
+</body></html>
