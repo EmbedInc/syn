@@ -6,11 +6,32 @@
 <body>
 
 <h1 class=page>Embed Syntaxer User's Guide</h1>
-<p class=page>Last updated 23 Dec 2023</p>
+<p class=page>Last updated 24 Dec 2023</p>
+
+<ul>
+  <li><a href="#intro">Introduction</a><ul>
+    <li><a href="#intro_usage">Usage overview</a>
+    <li><a href="#intro_comp">Components</a>
+    </ul>
+  <li><a href="#source">Source Code</a><ul>
+    <li><a href="#source_git">GIT repositories</a><ul>
+      <li><a href="#source_git_build">Setting up source to be buildable</a>
+      </ul>
+    </ul>
+  <li><a href="#instream">Input Stream</a><ul>
+    </ul>
+  <li><a href="#syn">Syntax Definition</a><ul>
+    <li><a href="#syn_char">Character by character</a>
+    <li><a href="#syn_constr">Syntax constructions</a>
+    <li><a href="#syn_subrname">Subroutine names</a>
+    <li><a href="#syn_ext">External parsing routines</a>
+    <li><a href="#syn_padspace">PAD and SPACE constructions</a>
+    </ul>
+  </ul>
 
 
 <!-- -------------------------------------------------------------------------->
-<h1>Introduction</h1>
+<h1 id="intro">Introduction</h1>
 
 <p>The Embed Inc syntaxer is a library and programs to help software parse
 and act on complex formal languages.  At a high level, the syntaxer
@@ -27,15 +48,15 @@ provides these services:<ol>
 
   </ol>
 
-<h2>Usage overview</h2><indent>
+<h2 id="intro_usage">Usage overview</h2><indent>
 
   <p>The steps for the developer of an application to use the syntaxer are
   briefly listed here.  Subsequent sections of this document go into
   details.  At a high level, the steps for building an application to
   parse complex syntax with the Embed syntaxer are:<ol>
 
-    <li>Define the syntax to parse using the SYN syntax language.  The SYN
-    syntax definition language is described in the <a
+    <li>Define the syntax to parse using the SYN syntax definition
+    language.  The SYN language is described in the <a
     href="../syn_file.txt">syn_file</a> documentation file.  This step
     amounts to writing a .syn file.
 
@@ -50,12 +71,12 @@ provides these services:<ol>
     file.  This object file will need to be linked with the application
     when that application is built.
 
-    <li>Add calls to the application to capture the input stream, use the
-    SYN library to parse it, build the syntax tree, then traverse that
-    syntax tree and perform the specified actions.
+    <li>Add calls to the application to use the SYN library to parse the
+    input, build the syntax tree, then traverse that syntax tree and
+    perform the specified actions.
 
     <li>When the application is built, the compiled object resulting from
-    the SYN file must be linked in.  The SYN library, and various
+    the SYN file must be linked to it.  The SYN library, and various
     additional Embed libraries used by SYN must also be statically linked
     to the application.
 
@@ -63,7 +84,7 @@ provides these services:<ol>
 
   </p></indent>
 
-<h2>Components</h2><indent>
+<h2 id="intro_comp">Components</h2><indent>
 
   <p>The overall syntaxer facility includes various software components:
 
@@ -126,6 +147,22 @@ provides these services:<ol>
 
     </p></indent>
 
+  <h3>TEST_SYN program</h3><indent>
+
+    <p><a href="../test_syn.txt">TEST_SYN</a> is a test program that show
+    the syntax tree resulting from a .syn file.  It can be useful to see
+    the resulting syntax tree when writing a syntax definition.
+
+    <p>The source code (<a href="../test_syn.pas">test_syn.pas</a>) also
+    serves as a template for programs to provide the same function for
+    other languages.  TEST_SYN always parses its input file according to
+    the SYN language.  Only minor modifications are necessary to instead
+    parse a different language specified by a different .syn file.
+    Customizing TEST_SYN for a different language is detailed in a later
+    section of this document.
+
+    </p></indent>
+
   <h3>Other Embed libraries</h3><indent>
 
     <p>The SYN library is layered on other Embed libraries that must also
@@ -133,6 +170,343 @@ provides these services:<ol>
     FLINE.
 
     </p></indent>
+
+  </p></indent>
+
+
+<!-- -------------------------------------------------------------------------->
+<h1 id="source">Source Code</h1>
+
+<p>The syntaxer, as with most Embed software, is written in the Embed
+Pascal language.  The details of this language are embodied in the
+source-to-source translator (SST) program Pascal front end.  Pascal
+modules are built by first translating them to C with SST, then compiling
+the C code with commonly available compilers.
+
+<p>Source code examples will be shown in the Embed Pascal language in this
+document.  Readers generally familiar with Pascal or C should be able to
+follow along.  It is not the purpose of this document to teach or explain
+the Embed Pascal Language.
+
+<h2 id="source_git">GIT repositories</h2><indent>
+
+  <p>All source code for the syntaxer and components it relies on is open
+  and available in GIT repositories on GitHub.
+
+  <h3 id="source_git_build">Setting up source to be buildable</h3><indent>
+
+    <p>This document assumes that the Embed full runtime sofware has been
+    installed, local copies of the GIT source code repositories have been
+    made, and the source can be built using the supplied build scripts.
+    The Embed environment can be set up accordingly by going to the Embed
+    <a href="http://www.embedinc.com/pic/dload.htm">software downloads
+    page</a>, installing the full runtime environment, and following the
+    directions to get the source code and set it up to be buildable.
+    Tools for building Microchip PIC code need not be installed to use the
+    syntaxer.
+
+    <p>If the BUILD_HOST script runs without errors, then everything is
+    set up properly.
+
+    <p>Links in this document assume it is in the CODE directory in the
+    SYN source repository, within the Embed SOURCE tree on the local
+    machine.
+
+    </p></indent>
+
+  </p></indent>
+
+
+<!-- -------------------------------------------------------------------------->
+<h1 id="instream">Input Stream</h1>
+
+<p>The input stream to be parsed by the syntaxer must be stored in memory.
+Specifically, it must be in a collection of lines managed by the <a
+href="../../fline/fline.ins.pas">FLINE</a> library.  This may seem
+cumbersome at first, but it provides important advantages:<ol>
+
+  <li>Allows going back and forth.  The syntaxer reads the input stream
+  while following the syntax definition.  This may result in going down
+  "dead ends" and backtracking where there are multiple possible syntax
+  paths, until the path that matches the input is found.
+
+    <p>Even if the syntaxer read an input stream "live", it would still
+    need to store all that it read to be able to go back and take a
+    different syntax branch from an earlier point.
+
+  <li>Allows pointers to input stream sections.  Tagged sections of the
+  input syntax are stored on the syntax tree.  Instead of making copies of
+  the input stream sections, pointers are stored to the single copy of the
+  input stream.
+
+  <li>The application can manage getting the input stream.  There are many
+  possible ways the input stream could be acquired beyond just reading it
+  from a file.  It could be entered live by a user, the result of
+  pre-processing a set of files, or generated entirely by the application.
+  These possibilities should not be limited or dictated by the syntaxer.
+
+  <li>Input files hierarchy is not lost.  The FLINE library allows for
+  maintaining a flattened text stream that originated from a tree of input
+  files, while still knowing what part of the original source each line
+  was derived from.  This can be useful for emitting meaningful error
+  messages to the user, for example.
+
+    <p>A tree of files could be interpreted by a pre-processor, for
+    example. Facilities in the FLINE library allow the pre-processor to
+    indicate the location in the complete hierarchy of files that each
+    output line results from.  Such a pre-processor is not limited to only
+    expanding "include" directives.  There need not be a one-to-one
+    correspondence of input lines to output lines.
+
+    <p>The Embed pre-processor, <a
+    href="../../escr/doc/index.htm">ESCR</a>, is an example of a
+    pre-processor that can write its output to an FLINE source lines
+    collection.
+
+  <li>Each input file is only stored once.  If a tree of input files is
+  flattened to create the syntaxer input stream, some low level input
+  files may be referenced multiple times.  The FLINE library allows for
+  storing each input file only once, but still maintaining the full
+  hierarchy reference for each resulting output line.
+
+  </ol>
+
+<p>While the FLINE library allows for great flexibility, it also provides layered
+routines for performing the simple cases simply.  For example, here is the entire code
+from the TEST_SYN program that creates an FLINE collection of lines from the input
+file:
+
+<pre>
+  fline_lib_new (                      {open the FLINE library}
+    util_top_mem_context,              {parent memory context}
+    fline_p,                           {returned pointer to new library use state}
+    stat);
+  sys_error_abort (stat, '', '', nil, 0);
+
+  fline_file_get_suff (                {read the input file into a collection}
+    fline_p^,                          {FLINE library use state}
+    fnam_in, '.syn',                   {file name and mandatory suffix}
+    coll_p,                            {returned pointer to the collection}
+    stat);
+  sys_error_abort (stat, '', '', nil, 0);
+  </pre>
+
+<p>The result of this code section is that <tt>coll_p</tt> is set pointing
+to the input lines ready to pass to the syntaxer.
+
+<p>The details of the FLINE library are beyond the scope of this document.
+Since it is not relevant to the syntaxer how the input stream was acquired
+or derived, examples in this document will assume the simplified case
+where it is read directly from a single input file.
+
+
+<!-- -------------------------------------------------------------------------->
+<h1 id="syn">Syntax Definition</h1>
+
+<p>The syntax that the syntaxer is customized to parse in any one instance
+is defined by a syntax definition file.  The name of this file always ends
+in ".syn".  This SYN file ultimately results in executable code specific
+to the particular syntax.  This code is then linked with the application
+and the SYN library.
+
+<p>The SYN file is therefore only used in building the application.  It is
+not read at run time.  If the syntax is changed, the SYN file must be
+changed accordingly and the application re-built for the change to take
+effect.
+
+<p>The SYN file language is described in the <a
+href="../syn_file.txt">syn_file</a> documentation file.  The remainder of
+this document assumes the reader understands the syntax definition
+language.
+
+<h2 id="syn_char">Character by character</h2><indent>
+
+  <p>Unlike some other syntax parsing systems, the input stream is not
+  "tokenized" or processed in multiple stages.  At run time, the syntaxer
+  matches the input stream to the syntax definition character by
+  character.  If there needs to be a space or new line at some point, for
+  example, then that must be explicitly stated in the syntax definition.
+
+  <p>In this sense, the syntaxer is "dumb".  It simply compares the
+  current input character to the current point in the syntax definition.
+  If they match, then it continues to the next character.  If they do not
+  match, then it pops back to the last decision point (in both the syntax
+  definition and the input stream) and tries the next possible syntax
+  branch.
+
+  <p>If no branches thru the syntax possiblities match the input stream,
+  then there is a syntax error.  The syntaxer saves the furthest point in
+  the input stream that did match the syntax, and indicates error at the
+  next character.  The application can get this location in the input
+  stream.  It can also traverse the partial syntax tree to the error
+  point, which may provide some semantic context for the error.
+
+  </p></indent>
+
+<h2 id="syn_constr">Syntax constructions</h2><indent>
+
+  <p>A particular syntax is defined by a nested series of syntax
+  constructions.  Each named symbol in the SYN file is one construction. A
+  construction results in one syntax parsing subroutine in the compiled
+  syntax code, and a separate subordinate level in the syntax tree after
+  parsing.
+
+  <p>Within a construction, syntax is defined as a sequence of "items"
+  called an "expression".  Items are those built into the syntax
+  definition language, or subordinate constructions specified by the
+  construction name.  An expression in parenthesis becomes a single item.
+  This allows expressions to be nested.
+
+  <p>There is no fixed rule as to how the overall syntax should be broken
+  into separate constructions.  Deciding what to include in-line in an
+  existing construction versus creating a subordinate construction is much
+  like deciding what to put in a single subroutine versus breaking it into
+  multiple subordinate subroutines.  However, the following should be kept
+  in mind:<ul>
+
+    <li>Each construction creates its own nested level in the syntax tree.
+
+    <li>The name of the construction for a particular syntax tree level
+    can be determined by the application when traversing the syntax tree.
+    This can aid in debugging and in providing more useful information for
+    error messages.  Note that the TEST_SYN program shows the construction
+    name at the start of each syntax tree level.
+
+    <li>The current nested list of construction names is maintained as the
+    input stream is parsed.  This hierarchy can be shown to the user for
+    debugging purposes and in error messages.
+
+    </ul>
+
+  <p>In general, it is good to create a separate construction for any
+  recurring syntax.  For example, consider the INTEGER construction of the
+  SYN language:</p><indent>
+
+<pre>
+.define INTEGER .as
+  .occurs [1 to INF] .range ['0' thru '9']
+</pre></indent>
+
+  <p>This is a simple integer, comprised of one or more sequential decimal
+  digits.  The INTEGER construction is then used in several places in the
+  SYN definition.
+
+  <p>It can also be useful to have the application code that processes the
+  syntax tree have a separate subroutine for each construction.
+
+  <p>In this example, it would make sense to have a separate subroutine to
+  get an integer value.  The subroutine expects to be in the parent syntax
+  level, with the next entry being the subordinate INTEGER level.  The
+  subroutine goes down into the subordinate level, gets the digit
+  characters, interprets them into an integer value, and pops back up to
+  the parent level while returning the integer value.  From the parent
+  routine, the subortinate INTEGER is treated like a single entity.
+
+  <p>Consideration should therefore also be given to how the syntax tree
+  traversing code will be structured when deciding how to break up a
+  syntax into nested constructions.
+
+  </p></indent>
+
+<h2 id="syn_subrname">Subroutine names</h2><indent>
+
+  <p>As stated before, each syntax construction in the SYN file results in
+  a separate parsing subroutine.  By default, these subroutine names are
+  automatically generated.  Applications don't need to know the names of
+  most syntax parsing routines because they will only be called from other
+  syntax parsing routines.
+
+  <p>However, at least the top level parsing routine must be known to the
+  application, since the application must supply a pointer to the routine
+  to start parsing.  For this reason, a fixed subroutine name can be
+  specified in the .SYMBOL command for the construction.
+
+  <p>In general, it is recommended that only those parsing routines
+  referenced directly by the application be named, and that the names be
+  SYN_CH_xxx.  Names starting with SYN_CH_ are reserved for parsing
+  routines and are not used in the SYN library.
+
+  <p>In this respect, do not use the SYN syntax definition as a guide. All
+  routines were explicitly named to avoid name collisions with
+  user-generated parsing routines since the SYN parsing routines are
+  always part of the SYN library.  The SYN parsing routines are named
+  SYN_CHSYN_xxx, where XXX is the construction name.  Nothing else in the
+  SYN library is named starting with SYN_CHSYN_, so these routines are
+  effectively in their own namespace.
+
+  </p></indent>
+
+<h2 id="syn_ext">External parsing routines</h2><indent>
+
+  <p>SYN constructions provide a compact and reasonably user-friendly
+  means to describe the actions of syntax parsing routines.  The actual
+  code generated by the SYN program is much more verbose, harder to
+  understand, and harder to modify.  Fortunately this complexity and
+  obfuscation is largely irrelevant since these routines are written by
+  machine.
+
+  <p>However, there is no requirement that syntax parsing routines
+  <i>must</i> only be generated by the SYN compiler.  The interface used
+  by the parsing routines is documented and exported by the SYN library.
+  These are routines with names SYN_P_xxx.
+
+  <p>It is possible to manually write a parsing routine by using the same
+  interface as SYN-generated parsing routines.  This can allow for
+  features not available via the SYN language, or to perform other
+  application-specific actions during parsing.
+
+  <p>Writing your own syntax parsing routine is an advanced concept
+  covered in a later section of this document.
+
+  <p>The SYN language provides a means to indicate a syntax construction
+  is not defined in the SYN file, and that its parsing routine is
+  implimented externally to the automatically-created parsing routines.
+  This mechanism is the optional EXTERN keyword in the .SYMBOL command.
+  When the contruction is declared EXTERN, then its subroutine name must
+  be explicitly given.  The externally defined construction can then be
+  used like any other syntax construction in the remainder of the SYN
+  file.
+
+  </p></indent>
+
+<h2 id="syn_padspace">PAD and SPACE constructions</h2><indent>
+
+  <p>As mentioned before, there is no separate tokanizer or other
+  pre-parsing pass over the input stream.  Not all syntaxes can be
+  described as a sequence of tokens, and there is never a need to specify
+  them that way.
+
+  <p>However, allowing or requiring one or more spaces between syntax
+  items is common to many languages, including the SYN language.  These
+  functions are implemented with the PAD and SPACE constructions in the
+  SYN language definition.
+
+  <p>The SYN language is comprised of flowed text, meaning that end of
+  line is a separator like space.  This also means that indentation per
+  line is irrelevant.
+
+  <p>The PAD construction allows for any number of separators.  These are
+  space, end of line, and end of nested file.  End of line comments are
+  also automatically skipped over.
+
+  <p>SPACE is the same thing except that at least one separator is
+  required.
+
+  <p>As mentioned in the <a href="#syn_subrname"><i>Subroutine
+  names</i></a> section (above), all the SYN language parsing routines are
+  part of the SYN library with fixed names.  The PAD and SPACE parsing
+  routines are therefore always available, with names
+  <tt>syn_chsyn_pad</tt> and <tt>syn_chsyn_space</tt>, respectively. These
+  two syntax parsing routines were written manually to exploit efficiency
+  made possible by special characteristics of these constructions.  There
+  is more detail on this in a later section about writing your own syntax
+  parsing routines directly.
+
+  <p>If the SYN PAD and SPACE constructions happen to match the
+  requirements of a custom syntax, then they can be used directly.  To do
+  that, declare the constructions EXTERN, and provide the routine names
+  given above.  Note that the constructions do not need to be called "PAD"
+  and "SPACE", but the routine names must be referenced verbatim.
 
   </p></indent>
 

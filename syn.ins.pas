@@ -381,8 +381,8 @@ procedure syn_pos_show (               {show input stream pos at curr tree entry
 *
 *   FALSE means that the parsed input did not match the syntax construction.
 *   The input stream position has been returned to what it was when the routine
-*   was called, and the syntax tree has not changed.  FALSE is also returned when
-*   end of error re-parse is encountered.
+*   was called, and the syntax tree has not changed.  FALSE is also returned
+*   when end of error re-parse is encountered.
 }
 procedure syn_p_charcase (             {set charcase handling, restored at constr end}
   in out  syn: syn_t;                  {SYN library use state}
