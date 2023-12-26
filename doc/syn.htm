@@ -6,7 +6,7 @@
 <body>
 
 <h1 class=page>Embed Syntaxer User's Guide</h1>
-<p class=page>Last updated 24 Dec 2023</p>
+<p class=page>Last updated 26 Dec 2023</p>
 
 <ul>
   <li><a href="#intro">Introduction</a><ul>
@@ -26,6 +26,15 @@
     <li><a href="#syn_subrname">Subroutine names</a>
     <li><a href="#syn_ext">External parsing routines</a>
     <li><a href="#syn_padspace">PAD and SPACE constructions</a>
+    <li><a href="#syn_tag">Tagging syntax items</a>
+    </ul>
+  <li><a href="#lib">Managing the SYN Library</a><ul>
+    </ul>
+  <li><a href="#parse">Parsing the Input Stream</a><ul>
+    </ul>
+  <li><a href="#tree">Traversing the Syntax Tree</a><ul>
+    </ul>
+  <li><a href="#syncalc">SYNCALC Example Application</a><ul>
     </ul>
   </ul>
 
@@ -322,8 +331,8 @@ language.
 <h2 id="syn_char">Character by character</h2><indent>
 
   <p>Unlike some other syntax parsing systems, the input stream is not
-  "tokenized" or processed in multiple stages.  At run time, the syntaxer
-  matches the input stream to the syntax definition character by
+  "tokenized" or otherwise processed in multiple stages.  At run time, the
+  syntaxer matches the input stream to the syntax definition character by
   character.  If there needs to be a space or new line at some point, for
   example, then that must be explicitly stated in the syntax definition.
 
@@ -402,7 +411,7 @@ language.
   the parent level while returning the integer value.  From the parent
   routine, the subortinate INTEGER is treated like a single entity.
 
-  <p>Consideration should therefore also be given to how the syntax tree
+  <p>Consideration should therefore be given to how the syntax tree
   traversing code will be structured when deciding how to break up a
   syntax into nested constructions.
 
@@ -412,7 +421,7 @@ language.
 
   <p>As stated before, each syntax construction in the SYN file results in
   a separate parsing subroutine.  By default, these subroutine names are
-  automatically generated.  Applications don't need to know the names of
+  automatically generated.  Applications do not need to know the names of
   most syntax parsing routines because they will only be called from other
   syntax parsing routines.
 
@@ -509,5 +518,102 @@ language.
   and "SPACE", but the routine names must be referenced verbatim.
 
   </p></indent>
+
+<h2 id="syn_tag">Tagging syntax items</h2><indent>
+
+  <p>One of the powerful features of the syntaxer is that it only passes
+  on to applications those parts of the input stream that are relevant
+  after all the syntax details have been verified.  For example, consider
+  the simple Pascal assignment statement:
+
+  <pre>
+    <i>variable</i> := <i>expression</i>;
+    </pre>
+
+  <p>After all the syntax details have been checked, the application only
+  needs to act on the variable name and the expression string.  The ":="
+  assignment operator and ending ";" no longer matter after they have been
+  verified.  The syntaxer would also probably verify that the variable
+  name contained only certain characters, and didn't include a space.
+  There would also likely be basic syntactical validation of the
+  expression.
+
+  <p>Passing on only selected parts of the parsed input for semantic
+  processing is done by "tagging" those parts of the input.  In this
+  example, the variable name and expression would be tagged.  Tagging is
+  done by appending a number in brackets immediately after the syntax item
+  being tagged.  This number must be a simple decimal integer of 1 or
+  greater.
+
+  <p>For example, here is a possible assignment statement syntax
+  definition:
+
+  <pre>
+  .define assignment .as
+    variable[1] pad ":=" pad expression[1] pad ";"
+  </pre>
+
+  <p>In this example, the PAD construction allows for zero or more
+  separators, like blanks and new lines.  VARIABLE and EXPRESSION are
+  syntax constructions defined separately.
+
+  <p>When an assignment statement is parsed, only links to the variable
+  name and the expression string are added to the syntax tree.  In this
+  case, both are tagged with the ID of 1.  The ID values in this case are
+  arbitrary since they are not necessary for determining which syntax path
+  was taken.  Once in the ASSIGNMENT syntax tree level, there are always
+  two tagged items.  These are the variable name and the expression string
+  in that order.
+
+  <p>When the application traverses the syntax tree and finds an
+  assignment statement, it first goes down into the subordinate assignment
+  statement tree level. There it gets the string for the first tag and
+  interprets it as the variable name.  It gets the second tag and
+  interprets it as an expression.  Note that the ":=" assignment operator,
+  the ending ";", and possible intersperced blanks and new lines are not
+  considered at this point.  This syntax tree content wouldn't be here if
+  those syntax details weren't correct.
+
+  <p>In some cases, the tag IDs are used to indicate which syntax branch
+  was taken.  To continue with our Pascal statement example, an excutable
+  statement definition could be:
+
+  <pre>
+  .define exec_statment .as
+    .
+    .
+    .
+    assignment[5] .or
+    subroutine_call[6] .or
+    for_loop[7] .or
+    .
+    .
+    .
+    </pre>
+
+  <p>In this case, the statement only matches one of the syntax choices.
+  If it is an assignment statement, the next syntax tree item will be tag
+  5, if a subroutine call tag 6, etc.  In this case it is up to the SYN
+  file writer to ensure that the tags for each choice are unique.
+
+  </p></indent>
+
+
+<!-- -------------------------------------------------------------------------->
+<h1 id="lib">Managing the SYN library</h1>
+
+
+
+<!-- -------------------------------------------------------------------------->
+<h1 id="parse">Parsing the input stream</h1>
+
+
+<!-- -------------------------------------------------------------------------->
+<h1 id="tree">Traversing the Syntax Tree</h1>
+
+
+<!-- -------------------------------------------------------------------------->
+<h1 id="syncalc">SYNCALC Example Application</h1>
+
 
 </body></html>
