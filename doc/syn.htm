@@ -6,7 +6,7 @@
 <body>
 
 <h1 class=page>Embed Syntaxer User's Guide</h1>
-<p class=page>Last updated 26 Dec 2023</p>
+<p class=page>Last updated 13 Jan 2024</p>
 
 <ul>
   <li><a href="#intro">Introduction</a><ul>
@@ -35,6 +35,10 @@
   <li><a href="#tree">Traversing the Syntax Tree</a><ul>
     </ul>
   <li><a href="#syncalc">SYNCALC Example Application</a><ul>
+    </ul>
+  <li><a href="#testsyn_cust">Modifying TEST_SYN for custom syntax</a><ul>
+    </ul>
+  <li><a href="#cust_constr">Manually creating syntax parsing routine</a><ul>
     </ul>
   </ul>
 
@@ -141,7 +145,7 @@ provides these services:<ol>
   <h3>SST program</h3><indent>
 
     <p><a href="../../sst/sst.txt">SST</a> is the Embed source-to-source
-    translator.  It is used to build C code from a syntax definition by
+    translator.  It is used to create C code from a syntax definition by
     using the SYN front end and C back end.
 
     </p></indent>
@@ -158,7 +162,7 @@ provides these services:<ol>
 
   <h3>TEST_SYN program</h3><indent>
 
-    <p><a href="../test_syn.txt">TEST_SYN</a> is a test program that show
+    <p><a href="../test_syn.txt">TEST_SYN</a> is a test program that shows
     the syntax tree resulting from a .syn file.  It can be useful to see
     the resulting syntax tree when writing a syntax definition.
 
@@ -167,8 +171,8 @@ provides these services:<ol>
     other languages.  TEST_SYN always parses its input file according to
     the SYN language.  Only minor modifications are necessary to instead
     parse a different language specified by a different .syn file.
-    Customizing TEST_SYN for a different language is detailed in a later
-    section of this document.
+    Customizing TEST_SYN for a different language is detailed in a <a
+    href="#testsyn_cust">later section</a> of this document.
 
     </p></indent>
 
@@ -217,9 +221,8 @@ the Embed Pascal Language.
     <p>If the BUILD_HOST script runs without errors, then everything is
     set up properly.
 
-    <p>Links in this document assume it is in the CODE directory in the
-    SYN source repository, within the Embed SOURCE tree on the local
-    machine.
+    <p>Links in this document assume it is in the DOC directory in the SYN
+    source repository, within the Embed SOURCE tree on the local machine.
 
     </p></indent>
 
@@ -369,7 +372,7 @@ language.
   <p>There is no fixed rule as to how the overall syntax should be broken
   into separate constructions.  Deciding what to include in-line in an
   existing construction versus creating a subordinate construction is much
-  like deciding what to put in a single subroutine versus breaking it into
+  like deciding what to put in a single routine versus breaking it into
   multiple subordinate subroutines.  However, the following should be kept
   in mind:<ul>
 
@@ -408,7 +411,7 @@ language.
   level, with the next entry being the subordinate INTEGER level.  The
   subroutine goes down into the subordinate level, gets the digit
   characters, interprets them into an integer value, and pops back up to
-  the parent level while returning the integer value.  From the parent
+  the parent level while returning the integer value.  In the parent
   routine, the subortinate INTEGER is treated like a single entity.
 
   <p>Consideration should therefore be given to how the syntax tree
@@ -465,7 +468,7 @@ language.
   application-specific actions during parsing.
 
   <p>Writing your own syntax parsing routine is an advanced concept
-  covered in a later section of this document.
+  covered in a <a href="#cust_constr">later section</a> of this document.
 
   <p>The SYN language provides a means to indicate a syntax construction
   is not defined in the SYN file, and that its parsing routine is
@@ -508,8 +511,9 @@ language.
   <tt>syn_chsyn_pad</tt> and <tt>syn_chsyn_space</tt>, respectively. These
   two syntax parsing routines were written manually to exploit efficiency
   made possible by special characteristics of these constructions.  There
-  is more detail on this in a later section about writing your own syntax
-  parsing routines directly.
+  is more detail on this in a later section about <a
+  href="#cust_constr">writing your own syntax parsing routines
+  directly</a>.
 
   <p>If the SYN PAD and SPACE constructions happen to match the
   requirements of a custom syntax, then they can be used directly.  To do
@@ -603,7 +607,6 @@ language.
 <h1 id="lib">Managing the SYN library</h1>
 
 
-
 <!-- -------------------------------------------------------------------------->
 <h1 id="parse">Parsing the input stream</h1>
 
@@ -614,6 +617,14 @@ language.
 
 <!-- -------------------------------------------------------------------------->
 <h1 id="syncalc">SYNCALC Example Application</h1>
+
+
+<!-- -------------------------------------------------------------------------->
+<h1 id="testsyn_cust">Modifying TEST_SYN for custom syntax</h1>
+
+
+<!-- -------------------------------------------------------------------------->
+<h1 id="cust_constr">Manually creating syntax parsing routine</h1>
 
 
 </body></html>
