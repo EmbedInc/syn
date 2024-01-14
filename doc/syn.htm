@@ -6,7 +6,7 @@
 <body>
 
 <h1 class=page>Embed Syntaxer User's Guide</h1>
-<p class=page>Last updated 13 Jan 2024</p>
+<p class=page>Last updated 14 Jan 2024</p>
 
 <ul>
   <li><a href="#intro">Introduction</a><ul>
@@ -28,11 +28,11 @@
     <li><a href="#syn_padspace">PAD and SPACE constructions</a>
     <li><a href="#syn_tag">Tagging syntax items</a>
     </ul>
-  <li><a href="#lib">Managing the SYN Library</a><ul>
-    </ul>
-  <li><a href="#parse">Parsing the Input Stream</a><ul>
-    </ul>
-  <li><a href="#tree">Traversing the Syntax Tree</a><ul>
+  <li><a href="#synlib">Using the SYN Library</a><ul>
+    <li><a href="#synlib_doc">Documentation</a>
+    <li><a href="#synlib_lib">Library management</a>
+    <li><a href="#synlib_parse">Parsing the Input Stream</a>
+    <li><a href="#synlib_tree">Traversing the Syntax Tree</a>
     </ul>
   <li><a href="#syncalc">SYNCALC Example Application</a><ul>
     </ul>
@@ -604,15 +604,367 @@ language.
 
 
 <!-- -------------------------------------------------------------------------->
-<h1 id="lib">Managing the SYN library</h1>
+<h1 id="synlib">Using the SYN library</h1>
+
+<p>This section describes how to use the SYN library from the
+application's point of view.  The application-visible interface to the SYN
+library is defined in the syn.ins.pas include file (and syn.h, which is
+derived from syn.pas).  It may be helpful to refer to the include file
+while reading this section.
 
 
-<!-- -------------------------------------------------------------------------->
-<h1 id="parse">Parsing the input stream</h1>
+<h2 id="synlib_doc">Documentation</h2><indent>
+
+  <p>Descriptions about using the SYN library is in several different
+  places:
+
+  <h3>SYN.HTM (this file)</h3><indent>
+
+    <p>The file you are reading now (SYN.HTM in the SYN repository DOC
+    subdirectory) is intended to be the first level of documentation.  It
+    provides an introduction, overview, and then details of using the SYN
+    library.  This file is intended to be read before writing any
+    application code.
+
+    </p></indent>
+
+  <h3>SYN.INS.PAS comments</h3><indent>
+
+    <p>The comments in the Pascal include file (syn.ins.pas) provide quick
+    reminders about the various routines, arguments, and data structures.
+    It is intended to be referred to continually when writing application
+    code, once a basic understanding of the library has been achieved.
+
+    </p></indent>
+
+  <h3>Source code header comments</h3><indent>
+
+    <p>Each routine is described in more detail in its header comments
+    immediately above the source code implementing that routine.  These
+    comments are meant to provide the definitive details for using each
+    routine.
+
+    <p>Routines are grouped by function using a naming hierarchy. The
+    names of all public symbols in the SYN library start with "syn_". Each
+    successive "word" in the names provides more detail, until eventually
+    the name becomes unique.  For example, the library managenment routine
+    names start with "syn_lib_", and the routines for traversing a syntax
+    tree "syn_trav_".
+
+    <p>Routines are usually grouped into source files by this same naming
+    hierarchy.  The "syn_lib_" routines are in the "syn_lib.pas" file, and
+    the syntax tree traversing routines in the "syn_trav.pas" file, for
+    example.  Particularly large or complex routines may be in their own
+    files with more specific names.  While this file naming scheme is
+    generally followed, there may be exceptions.  A pattern search over
+    the "syn_*.pas" files may need to be performed to find the source code
+    of a particular routine.
+
+    <p>It is intended that the header comments in the source code of
+    particular routines will be occasionally referenced when writing
+    application code.
+
+    </p></indent>
+
+  <h3>Source code</h3><indent>
+
+    <p>If all else fails, read the source code.  This is not intended to
+    be necessary, but all the other documentation is never going to be
+    perfect.  The source code is written such that the logic flow can be
+    followed by largely reading the comments, but again, nothing is
+    perfect.
+
+    </p></indent>
+
+  </p></indent>
 
 
-<!-- -------------------------------------------------------------------------->
-<h1 id="tree">Traversing the Syntax Tree</h1>
+<h2 id="synlib_lib">Library management</h2><indent>
+
+  <p>The state for each use of the SYN library is kept in a <tt>syn_t</tt>
+  data structure.  This data is dynamically allocated when a new use of
+  the SYN library is started, and released when the library use is ended.
+  The application must keep a pointer to the SYN library use state, and
+  pass the use state when calling SYN library routines.
+
+  <p>The routines for library management are:</p><indent>
+
+<p><pre>
+procedure syn_lib_new (                {create new use of the SYN library}
+  in out  mem: util_mem_context_t;     {parent mem context, will create subordinate}
+  out     syn_p: syn_p_t);             {pointer to new SYN library use state}
+  val_param; extern;
+
+procedure syn_lib_end (                {end a use of the SYN library}
+  in out  syn_p: syn_p_t);             {pointer to lib use state, returned NIL}
+  val_param; extern;
+</pre></p></indent>
+
+  <p>The first routine allocates and initializes a new library use state,
+  and passes back <tt>syn_p</tt> pointing to it.
+
+  <p>The Embed tree-structured dynamic memory facility is used.  Dynamic
+  memory is always allocated under a "memory context".  These contexts can
+  be tree structured.  Deleting a memory context automatically deletes any
+  subordinate contexts, and deallocates all dynamic memory allocated to
+  those subordinate contexts.  The tree-structured dynamic memory routines
+  are in the UTIL library.
+
+  <p>A private memory context is always created for each SYN library use.
+  All dynamic memory allocated by a library use is therefore automatically
+  deallocated when that library use is ended.
+
+  <p>Applications can create their own dynamic memory context that a SYN
+  library use will be subordinate too.  If this is not needed, the top
+  level (root) memory context can be used as the parent for the private
+  SYN library memory context.  This top memory context is called
+  <tt>util_top_mem_context</tt>.
+
+  <p>For example, the TEST_SYN program uses the top memory context for the
+  parent:</p><indent>
+
+<p><pre>
+  syn_lib_new (                        {open the SYN library}
+    util_top_mem_context,              {parent memory context}
+    syn_p);                            {returned pointer to new library use state}
+</pre></p></indent>
+
+  <p>Subsequent SYN routines are passed the SYN library use state by
+  reference.  Note that in Pascal this is done by passing the use state
+  directly (not a pointer to it) with <tt>syn_p^</tt>.  However, since
+  this argument is declared <tt>in out</tt> in each routine template, the
+  compiler actually passes a pointer to the use state.
+
+  <p>Ending a use of the SYN library is very simple.  From TEST_SYN:</p><indent>
+
+<p><pre>
+  syn_lib_end (syn_p);                 {end this use of the SYN library}
+</pre></p></indent>
+
+  <p>Unlike the normal "working" routines of the SYN library,
+  <tt>syn_lib_end</tt> is explicitly passed a pointer to the use state.
+  Since this routine ends a library use and deallocates all its dynamic
+  memory, including the use state, the pointer is returned NIL.
+
+  </p></indent>
+
+<h2 id="synlib_parse">Parsing the input stream</h2><indent>
+
+  <p>Once a SYN library use has been created, the next step is to parse
+  the input stream.  While the documentation refers to the input "stream",
+  it is actually a collection of source lines managed by the FLINE
+  library.  See the TEST_SYN program for an example of reading the
+  contents of a file into an FLINE library collection of lines.
+
+  <p>Parsing is done in two steps.  First the current position within the
+  input stream is set, then a parse initiated from that position.
+
+  <p>The current input stream position can be set to the start of a
+  collection of lines with:
+
+</p><indent><p><pre>
+procedure syn_parse_pos_coll (         {set parse position to start of collection}
+  in out  syn: syn_t;                  {SYN library use state}
+  in var  coll: fline_coll_t);         {collection to go to start of}
+  val_param; extern;
+</pre></p></indent>
+
+  <p>Parsing from the current position is initiated with:
+
+</p><indent><p><pre>
+function syn_parse_next (              {parse, continue from current position}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      syfunc_p: syn_parsefunc_p_t) {top level syntax to parse against}
+  :boolean;                            {no error, syntax tree built}
+  val_param; extern;
+</pre></p></indent>
+
+  <p>The function returns TRUE if parsing was successful and a syntax tree
+  built, or FALSE if a syntax error was encountered.  In the latter case,
+  no syntax tree is built.  There is more on handling syntax errors below.
+
+  <p>If parsing from the start of a collection of lines, then the
+  convenience routine
+
+</p><indent><p><pre>
+function syn_parse_coll (              {parse from start of collection of lines}
+  in out  syn: syn_t;                  {SYN library use state}
+  in var  coll: fline_coll_t;          {collection of input lines to parse}
+  in      syfunc_p: syn_parsefunc_p_t) {top level syntax to parse against}
+  :boolean;                            {no error, syntax tree built}
+  val_param; extern;
+</pre></p></indent>
+
+  <p>can be used.  This combines <tt>syn_parse_pos_col</tt> and
+  <tt>syn_parse_next</tt> into a single call.
+
+  <p>Note that a pointer to the top level syntax construction is passed to
+  <tt>syn_parse_next</tt>.  This is how the code resulting from compiling
+  the .SYN syntax definition file is invoked.  This also means that at
+  least the top level syntax construction must be given an explicit name
+  in the .SYN file.
+
+  <p>For example, the top level syntax construction of the SYN language is
+  <tt>command</tt>.  This syntax construction symbol is therefore given an
+  explicit subroutine name in SYN.SYN:
+
+</p><indent><p><pre>
+.symbol command[syn_chsyn_command]
+</pre></p></indent>
+
+  <p>A pointer to this subroutine is then passed to
+  <tt>syn_parse_next</tt> in TEST_SYN to initiate parsing of the next
+  command:
+
+</p><indent><p><pre>
+  match := syn_parse_next (            {parse from the current position}
+    syn_p^,                            {SYN library use state}
+    addr(syn_chsyn_command));          {top level syntax construction to parse}
+</pre></p></indent>
+
+  <p>In this case, <tt>match</tt> is a boolean variable that will indicate
+  whether the input stream matched the syntax definition.  Successful
+  parses and parses that encountered a syntax error must be handled
+  differently.
+
+  <h3>After successful parse</h3><indent>
+
+    <p>When <tt>syn_parse_next</tt> returns TRUE, the input stream matched
+    the syntax definition, and a syntax tree was built.  The application
+    would then usually proceed to traversing the syntax tree.  See <a
+    href="#synlib_tree"> <i>Traversing the Syntax Tree</i></a>, below.
+
+    </p></indent>
+
+  <h3>After syntax error</h3><indent>
+
+    <p>When <tt>syn_parse_next</tt> returns FALSE, the input stream did
+    not match any path thru the syntax definition.  This means there is a
+    syntax error in the input stream.
+
+    <p>Because of how the parser works, only an empty syntax tree results
+    from a syntax error.  The parser matches the input stream against the
+    syntax definition.  When a choice is encountered in the syntax
+    definition, the parser saves the location of both the input stream and
+    the syntax definition at that point.  If subsequent parsing does not
+    match the syntax branch taken, state is restored to the decision point
+    and the next syntax branch tried.
+
+    <p>When there is a syntax error, there is no valid path thru the
+    syntax definition, so eventually state is restored to the starting
+    point.  When there are no more syntax choices to test, then the parse
+    is aborted and <tt>syn_parse_next</tt> returns FALSE.
+
+    <p>Some of the syntax branches might be more "right" than others, but
+    the parser can not determine that since they are all ultimately wrong.
+    To allow getting more information about a syntax error, the first
+    input stream position that did not match any syntax branch is saved.
+    This position can be retrieved with:
+
+</p><indent><p><pre>
+procedure syn_parse_err_pos (          {get the position of error after failed parse}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     epos: fline_cpos_t);         {position of first char not to match syntax}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>The application can find the original source file, line number,
+    character position, line contents, and other information from the
+    returned error position.  This can be useful, for example, in emitting
+    a meaningful error message to the user.  If this is the intent, the
+    convenience routine
+
+</p><indent><p><pre>
+procedure syn_parse_err_show (         {show error position after failed parse}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>can be used.  This shows the input file hierarchy at the error
+    position, the line containing the error, and the offending character.
+
+    <h4>Error re-parse</h4><indent>
+
+      <p>If only some or one syntax path reached the syntax error
+      position, then more context can be provided for the syntax error.
+      For example, consider the invalid Pascal assignment statement:
+
+</p><indent><p><pre>
+  ii := ++$^;
+</pre></p></indent>
+
+      <p>The syntax is valid past the ":=" indicating an assignment
+      statement.  This additional information can be useful in emitting a
+      more helpful error message to the user.  Instead of merely pointing
+      to the second "+" as a syntax error, the error message could
+      indicate "Invalid expression in assignment statement", for example.
+
+      <p>To get this additional context, the parse can be re-done, but
+      stop with a partially-built syntax tree when the error position is
+      reached.  This is done by performing an error re-parse:
+
+</p><indent><p><pre>
+procedure syn_parse_err_reparse (      {reparse after error, builds tree up to err}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+</pre></p></indent>
+
+      <p>This routine must only be called with the state left after a
+      parse that resulted in a syntax error.  The syntax tree of the first
+      path thru the input stream that matched everything up to the error
+      position will result.  The application can then traverse the partial
+      syntax tree to get more information about what was expected at that
+      point.
+
+      <p>Note that emitting a pure syntax error message with the error
+      position can still be useful, even if followed up by a more
+      context-specific error message.
+
+      </p></indent>
+
+    </p></indent>
+
+  <h3>Continuing to next parse</h3><indent>
+
+    <p>Depending on the syntax definition, each parse may only consume
+    part of the input stream.  This is the case, for example, with the SYN
+    syntax definition.  One <tt>command</tt> construction is parsed and
+    handled at a time, with the input stream containing successive
+    <tt>command</tt> constructions.
+
+    <p>A successful parse leaves the input stream position after the
+    last-consumed input character.  Therefore <tt>syn_parse_next</tt> can
+    be called after done with the result of the previous parse.  This is
+    in fact what TEST_SYN does.
+
+    <p>The input stream will of course end at some point.  This could be
+    handled by specifying the <tt>.eod</tt> (end of data) item in the
+    syntax definition with a unique tag.  However, it is often convenient
+    for the application to check whether the whole input stream has been
+    consumed.  This can be done with:
+
+</p><indent><p><pre>
+function syn_parse_end (               {check for at end of input}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {parse position is after all data}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>The function returns TRUE if the parse position is after all data,
+    and FALSE otherwise.
+
+    </p></indent>
+
+</p><indent><p><pre>
+</pre></p></indent>
+
+
+
+  </p></indent>
+
+<h2 id="synlib_tree">Traversing the Syntax Tree</h2><indent>
+
+  </p></indent>
 
 
 <!-- -------------------------------------------------------------------------->
