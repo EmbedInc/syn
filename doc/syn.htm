@@ -6,7 +6,7 @@
 <body>
 
 <h1 class=page>Embed Syntaxer User's Guide</h1>
-<p class=page>Last updated 14 Jan 2024</p>
+<p class=page>Last updated 21 Jan 2024</p>
 
 <ul>
   <li><a href="#intro">Introduction</a><ul>
@@ -955,14 +955,189 @@ function syn_parse_end (               {check for at end of input}
 
     </p></indent>
 
-</p><indent><p><pre>
-</pre></p></indent>
-
-
-
   </p></indent>
 
 <h2 id="synlib_tree">Traversing the Syntax Tree</h2><indent>
+
+  <p>A syntax tree is left after a successful parse or an error re-parse.
+  The syntax tree contains a sequence of entries in a tree structure.
+  These entries are either parts of the input stream deliberately tagged
+  by the syntax definition, or used to define the tree structure.
+
+  <p>Each level in the syntax tree has an entry that indicates its start
+  and end.  A level can also contain entries that point to subordinate
+  syntax tree levels.  Each of those has a start and end, and can point to
+  lower syntax tree levels, etc.
+
+  <p>The special error-end entry only exists in a tree resulting from an
+  error re-parse.  It can occur at any level, and marks the farthest point
+  in the input stream that matched the syntax definition.
+
+  <p>All syntax tree traversal actions are performed by calling SYN
+  library routines with names SYN_TRAV_xxx.
+
+  <h3>Traversal overview</h3><indent>
+
+    <p>The SYN library maintains a current position within the syntax
+    tree.  The application traverses the tree by advancing to the next
+    entry.  If that entry is a subordinate level, then the application can
+    go down into the subordinate level.  The application can pop back to
+    the parent level at any time, although this is usually done with the
+    end of the subordinate level is encountered.
+
+    <p>Named syntax constructions in the syntax definition result in
+    subordinate syntax tree entries.  Tagged items in the syntax
+    definition result in "tag" entries in the current level.  Applications
+    can determine and retrieve the input stream characters that were
+    tagged.  Acting upon tagged entries is how the application implements
+    whatever semantics were specified by the input stream.
+
+    </p></indent>
+
+  <h3>Initializing</h3><indent>
+
+    <p>After a parse, the syntax tree traversal state must be initialized
+    before the tree can be traversed.  This is done with:
+
+</p><indent><p><pre>
+procedure syn_trav_init (              {init traversion, at start, stack empty}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>This sets the current traversal position to the start of the tree,
+    which is the start of the top level.  The current entry will be the
+    start of the top tree level.
+
+    <p>The syntax tree position stack is also initialized to empty.  The
+    position stack is discussed in more detail in the section
+    <i>Saving/restoring tree position</i>, below.
+
+    </p></indent>
+
+  <h3>Getting entries</h3><indent>
+
+    <p>There are two types of values used to indicate what an entry is.
+    These are a <tt>syn_tent_k_t</tt> enumerated value, and an ordinary
+    integer.
+
+    <p>The enumerated value is useful for determining the overall type of
+    a syntax tree entry, while maintaining strong type checking.  The
+    possible values are:</p><indent><dl>
+
+      <dt><tt>syn_tent_lev_k</tt><dd>
+
+        <p>First entry of a syntax tree level.  All syntax tree levels
+        start with this entry.
+
+      <dt><tt>syn_tent_end_k</tt><dd>
+
+        <p>Last entry of a syntax tree level.  There is no "next" entry
+        here. Attempts to get subsequent entries at this level result in
+        staying at this END entry.
+
+      <dt><tt>syn_tent_sub_k</tt><dd>
+
+        <p>A subordinate level exists below this entry.
+
+      <dt><tt>syn_tent_tag_k</tt><dd>
+
+        <p>Result of a tag in the syntax definition.
+
+      <dt><tt>syn_tent_err_k</tt><dd>
+
+        <p>The farthest point reached in the input stream during an error
+        re-parse.  There is no "next" entry.
+
+      </dl></p></indent>
+
+    <p>The integer value is the only way to get the ID of a tag in the
+    syntax definition.  Tag IDs are always integers of 1 or greater.
+    Non-tag tree entries are indicates with 0 or less.  These are one of
+    the constants SYN_TAG_xxx_K.
+
+    <p>The current entry can be determined by calling one of
+
+</p><indent><p><pre>
+function syn_trav_type (               {get type of current syntax tree entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :syn_tent_k_t;                       {syntax tree entry type ID}
+  val_param; extern;
+
+function syn_trav_tag (                {get ID of current tag entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :sys_int_machine_t;                  {1-N tag number or SYN_TAG_xxx_K}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>The first gets the enumerated entry type ID, and the second the
+    integer entry ID value.
+
+    <p>To advance to the next sequential entry in the current tree level,
+    call one of:
+
+</p><indent><p><pre>
+function syn_trav_next (               {to next syntax tree entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :syn_tent_k_t;                       {type of syntax tree entry found}
+  val_param; extern;
+
+function syn_trav_next_tag (           {to next entry, return its tag value}
+  in out  syn: syn_t)                  {SYN library use state}
+  :sys_int_machine_t;                  {1-N tag number or SYN_TAG_xxx_K}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>As before, the first returns the entry type ID of the new entry,
+    and the second its integer ID value.
+
+    <p>Two functions can be used to go down into a subordinate syntax tree
+    level:
+
+</p><indent><p><pre>
+function syn_trav_down (               {down into subordinate level from curr entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {successfully entered subordinate level}
+  val_param; extern;
+
+function syn_trav_next_down (          {into sub level of next entry}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {next was sub level, moved down}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>The first goes down from the current entry.  The second first
+    advances to the next entry in the current level, then attempts to go
+    down into a subordinate level from there.  In either case, the
+    function returns TRUE if the tree position is now one level lower than
+    when the call was made.  FALSE indicates that the entry attempting to
+    go down from was not a subordinate level entry.
+
+    <p>To go back up from a subordinate level to the parent level, use:
+
+</p><indent><p><pre>
+function syn_trav_up (                 {pop up to parent syntax tree level}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {successfully popped to parent level}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>When successful (there was a parent level), the current entry is
+    the one immediately after the subordinate level entry in the parent.
+
+    </p></indent>
+
+  <h3>Getting input stream text</h3><indent>
+
+    </p></indent>
+
+  <h3>Saving/restoring tree position</h3><indent>
+
+    </p></indent>
+
+  <h3>Current tree state</h3><indent>
+
+    </p></indent>
 
   </p></indent>
 
@@ -980,3 +1155,6 @@ function syn_parse_end (               {check for at end of input}
 
 
 </body></html>
+
+</p><indent><p><pre>
+</pre></p></indent>
