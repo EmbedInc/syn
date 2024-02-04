@@ -273,7 +273,7 @@ function syn_trav_tag (                {get ID of current tag entry}
 
 procedure syn_trav_tag_start (         {get start loc for tag at curr tree entry}
   in out  syn: syn_t;                  {SYN library use state}
-  out     pos: fline_cpos_t);          {start of tagged string in soruce lines}
+  out     pos: fline_cpos_t);          {start of tagged string in source lines}
   val_param; extern;
 
 procedure syn_trav_tag_string (        {get string tagged by current tree entry}

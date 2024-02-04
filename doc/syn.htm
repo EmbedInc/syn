@@ -6,7 +6,7 @@
 <body>
 
 <h1 class=page>Embed Syntaxer User's Guide</h1>
-<p class=page>Last updated 21 Jan 2024</p>
+<p class=page>Last updated 4 Feb 2024</p>
 
 <ul>
   <li><a href="#intro">Introduction</a><ul>
@@ -34,11 +34,11 @@
     <li><a href="#synlib_parse">Parsing the Input Stream</a>
     <li><a href="#synlib_tree">Traversing the Syntax Tree</a>
     </ul>
-  <li><a href="#syncalc">SYNCALC Example Application</a><ul>
-    </ul>
   <li><a href="#testsyn_cust">Modifying TEST_SYN for custom syntax</a><ul>
     </ul>
   <li><a href="#cust_constr">Manually creating syntax parsing routine</a><ul>
+    </ul>
+  <li><a href="#syncalc">SYNCALC Example Application</a><ul>
     </ul>
   </ul>
 
@@ -99,7 +99,7 @@ provides these services:<ol>
 
 <h2 id="intro_comp">Components</h2><indent>
 
-  <p>The overall syntaxer facility includes various software components:
+  <p>The overall syntaxer facility includes these software components:
 
   <h3>SYN library</h3><indent>
 
@@ -115,7 +115,7 @@ provides these services:<ol>
       definition, and building a syntax tree with the parts that are
       tagged in the syntax definition to pass on to the application.
 
-      <li>Traversing the syntax tree, and retreiving the tagged items. The
+      <li>Traversing the syntax tree, and retrieving the tagged items. The
       original input stream text for each syntax tree element can be
       identified and retrieved.
 
@@ -124,7 +124,7 @@ provides these services:<ol>
       snippets from that input stream.
 
       <li>Low level generic facilities used during parsing.  These are not
-      usually accessed by the appliction directly.  They are called by the
+      usually accessed directly by the appliction.  They are called by the
       custom parsing code for a particular syntax.  This section of the
       SYN library provides the interface expected by the code compiled
       from the syntax definition file.
@@ -203,7 +203,7 @@ the Embed Pascal Language.
 
 <h2 id="source_git">GIT repositories</h2><indent>
 
-  <p>All source code for the syntaxer and components it relies on is open
+  <p>All source code for the syntaxer and components it relies on are open
   and available in GIT repositories on GitHub.
 
   <h3 id="source_git_build">Setting up source to be buildable</h3><indent>
@@ -472,7 +472,7 @@ language.
 
   <p>The SYN language provides a means to indicate a syntax construction
   is not defined in the SYN file, and that its parsing routine is
-  implimented externally to the automatically-created parsing routines.
+  implimented externally to the automatically-generated parsing routines.
   This mechanism is the optional EXTERN keyword in the .SYMBOL command.
   When the contruction is declared EXTERN, then its subroutine name must
   be explicitly given.  The externally defined construction can then be
@@ -546,8 +546,8 @@ language.
   processing is done by "tagging" those parts of the input.  In this
   example, the variable name and expression would be tagged.  Tagging is
   done by appending a number in brackets immediately after the syntax item
-  being tagged.  This number must be a simple decimal integer of 1 or
-  greater.
+  being tagged in the syntax definition.  This number must be a simple
+  decimal integer of 1 or greater.
 
   <p>For example, here is a possible assignment statement syntax
   definition:
@@ -683,7 +683,7 @@ while reading this section.
 
   <p>The state for each use of the SYN library is kept in a <tt>syn_t</tt>
   data structure.  This data is dynamically allocated when a new use of
-  the SYN library is started, and released when the library use is ended.
+  the SYN library is started, and released when that library use is ended.
   The application must keep a pointer to the SYN library use state, and
   pass the use state when calling SYN library routines.
 
@@ -1053,7 +1053,7 @@ procedure syn_trav_init (              {init traversion, at start, stack empty}
 
     <p>The integer value is the only way to get the ID of a tag in the
     syntax definition.  Tag IDs are always integers of 1 or greater.
-    Non-tag tree entries are indicates with 0 or less.  These are one of
+    Non-tag tree entries are indicated with 0 or less.  These are one of
     the constants SYN_TAG_xxx_K.
 
     <p>The current entry can be determined by calling one of
@@ -1129,21 +1129,181 @@ function syn_trav_up (                 {pop up to parent syntax tree level}
 
   <h3>Getting input stream text</h3><indent>
 
+    <p>The purpose of navigating syntax is ultimately to determine the
+    content of text in a particular formal language.  Tags are how content
+    snippets are conveyed to applications using the syntaxer.
+
+    <p>As descripbed earlier, sections of the input stream are "tagged" in
+    the syntax language definion with integer values of 1 or higher.  This
+    is done by following a syntax item with the integer value in square
+    brackets.
+
+    <p>For example, the DECLARE command of the SYN language is defined
+    using three tags:
+
+</p><indent><p><pre>
+.define DECLARE .as
+  '.symbol' space
+  symbol[1] pad
+  .optional (
+    '[' symbol[1] ']'
+    .optional (space 'external'[2])
+    )
+</pre></p></indent>
+
+    <p>This definition says that the DECLARE syntax construction starts
+    with the keyword ".symbol", followed by a space, followed by the
+    "symbol" syntax construction.
+
+    <p>The ".symbol" keyword and space are no longer needed once it is
+    determined the input string matches the DECLARE construction.  These
+    items are only for determining the right path thru the syntax
+    definition during parsing.  There is nothing further the application
+    needs to know about these while traversing the syntax tree.
+
+    <p>However, the name of the symbol being declared is something the
+    application does need to handle.  This is why it was tagged.  Only
+    tagged items are linked to from the syntax tree.
+
+    <p>There are two SYN library routines that the application can call to
+    get more information about a tagged item on the syntax tree:
+
+</p><indent><p><pre>
+procedure syn_trav_tag_start (         {get start loc for tag at curr tree entry}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     pos: fline_cpos_t);          {start of tagged string in source lines}
+  val_param; extern;
+
+procedure syn_trav_tag_string (        {get string tagged by current tree entry}
+  in out  syn: syn_t;                  {SYN library use state}
+  in out  tagstr: univ string_var_arg_t); {returned tagged string}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>The first gets the starting position of the tagged item in the
+    input stream. Remember that the whole input stream remains in memory
+    until explicitly released.  The returned POS value can be used to get
+    detailed information on the input stream position from the FLINE
+    library.  This information includes the exact line and column numbers,
+    and nested file hierarchy.  Details of how to use the FLINE library
+    are beyond the scope of this document.
+
+    <p>The second routine is a simple way to get a copy the input stream
+    characters that were tagged.  In the example above, this would be the
+    bare symbol name, with all surrounding syntax stripped.
+
+    <p>Note that the tag number is not really needed in the this example.
+    The only possible path thru the DECLARE construction includes the
+    symbol name as the first tagged item.
+
+    <p>The remainder of the DECLARE syntax after the name of the symbol
+    being defined can either be nothing, or another symbol name in literal
+    brackets optionally followed by the "external" keyword.  The
+    application must check for tag entries on the syntax tree to determine
+    which syntax path was taken.
+
+    <p>If there is a second tag, then that tag is for another symbol name.
+    If there is a third tag, then the "external" keyword was used.  In the
+    case of the third tag, just the existance or non-existance of the tag
+    indicates the choice.  There is no need to fetch the string for the
+    third tag, since it will always be "external".
+
     </p></indent>
 
   <h3>Saving/restoring tree position</h3><indent>
+
+    <p>It can be useful for applications traversing the syntax tree to
+    save positions on that tree, and later return to them.  There are two
+    mechanisms provided for this purpose.
+
+    <h4>Explicit position</h4><indent>
+
+      <p>The current syntax tree position can be saved and restored
+      explicitly with these routines:
+
+</p><indent><p><pre>
+procedure syn_trav_save (              {save current syntax tree position}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     pos: syn_treepos_t);         {returned syntax tree position}
+  val_param; extern;
+
+procedure syn_trav_goto (              {go to previously-saved syn tree position}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      pos: syn_treepos_t);         {saved position to go to}
+  val_param; extern;
+</pre></p></indent>
+
+      <p>The first saves the current position, and the second jumps back
+      to that position.  In this case, the application must maintain a
+      SYN_TREEPOS_T structure for each saved position.
+
+      </p></indent>
+
+    <h4>Stacked position</h4><indent>
+
+      <p>The SYN library maintains a stack of syntax tree positions for
+      use by the application during syntax tree traversal.  The stack is
+      reset to empty when the tree is initialized for traversal.  The
+      stack is reserved exclusively for application use.  The SYN library
+      does not silently push or pop anything to/from the stack.
+
+      <p>The routines for using the syntax tree position stack are:
+
+</p><indent><p><pre>
+procedure syn_trav_push (              {save curr syntax tree pos on internal stack}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_trav_pop (               {restore curr syntax tree pos from stack}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_trav_popdel (            {pop syn tree pos from stack, stay curr pos}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+</pre></p></indent>
+
+      <p>The first pushes the current syntax tree position onto the stack,
+      and the second pops the last-pushed position from the stack and goes
+      to that position in the syntax tree.
+
+      <p>The third routine pops the last-pushed entry from the stack, but
+      does not change the syntax tree position.  This effectively discards
+      the top stack entry.
+
+      </p></indent>
 
     </p></indent>
 
   <h3>Current tree state</h3><indent>
 
+    <p>Particularly for diagnostics and error messages, it can be useful
+    for applications to get information about the current syntax tree
+    level.  The routines for that purpose are:
+
+</p><indent><p><pre>
+function syn_trav_level (              {get nesting level of curr syntax tree pos}
+  in out  syn: syn_t)                  {SYN library use state}
+  :sys_int_machine_t;                  {0-N, 0 at top level}
+  val_param; extern;
+
+procedure syn_trav_level_name (        {get the name of the current syntax tree level}
+  in out  syn: syn_t;                  {SYN library use state}
+  in out  name: univ string_var_arg_t); {returned name}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>The first returns the current nesting level.  0 indicates the top
+    level. Each successive higher number indicates one more level down
+    from the top.
+
+    <p>The second routine returns the name of the current level.  This is
+    the name of the syntax construction as used in the ".define" command
+    in the syntax definition.
+
     </p></indent>
 
   </p></indent>
-
-
-<!-- -------------------------------------------------------------------------->
-<h1 id="syncalc">SYNCALC Example Application</h1>
 
 
 <!-- -------------------------------------------------------------------------->
@@ -1152,6 +1312,10 @@ function syn_trav_up (                 {pop up to parent syntax tree level}
 
 <!-- -------------------------------------------------------------------------->
 <h1 id="cust_constr">Manually creating syntax parsing routine</h1>
+
+
+<!-- -------------------------------------------------------------------------->
+<h1 id="syncalc">SYNCALC Example Application</h1>
 
 
 </body></html>
