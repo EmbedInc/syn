@@ -6,7 +6,7 @@
 <body>
 
 <h1 class=page>Embed Syntaxer User's Guide</h1>
-<p class=page>Last updated 4 Feb 2024</p>
+<p class=page>Last updated 11 Feb 2024</p>
 
 <ul>
   <li><a href="#intro">Introduction</a><ul>
@@ -1309,9 +1309,142 @@ procedure syn_trav_level_name (        {get the name of the current syntax tree 
 <!-- -------------------------------------------------------------------------->
 <h1 id="testsyn_cust">Modifying TEST_SYN for custom syntax</h1>
 
+<p>The <a href="../test_syn.txt">TEST_SYN</a> program shows the syntax
+trees resulting from a syntax definition file.  It can be useful for
+testing a custom syntax definition as it is being developed, and see the
+syntax trees that the application processing that custom syntax will
+encounter.
+
+<p>The source code for the TEST_SYN program is in the "test_syn.pas" file.
+This source is useful as an example of how to read an input file into
+memory so that the syntax can access it, parsing the syntax, and walking
+the resulting syntax trees.
+
+<p>Very little of TEST_SYN is actually specific to processing the SYN
+syntax, as opposed to any other syntax defined with the SYN language.  In
+addition, the source is structured for easy customization.
+
+<p>To make a version of TEST_SYN that parses a file according to a
+different syntax, peform these steps:
+
+<h2>Copy the source</h2><indent>
+
+  <p>Make a copy of "test_syn.pas", and name it something different.  In
+  this example, let's say your new syntax is named ABC, defined in
+  ABC.SYN.  A good name would be "test_abc.pas".
+
+  </p></indent>
+
+<h2>Set name of the top level syntax</h2><indent>
+
+  <p>At least the top level syntax construction must have a known
+  subroutine name.  This is done in the syntax definition file by
+  supplying an explicit subroutine name for the syntax construction in the
+  .SYMBOL command for that construction.  For example:
+
+</p><indent><p><pre>
+.symbol toplev[syn_ch_toplev]
+</pre></p></indent>
+
+  <p>This defines the existance of the syntax construction TOPLEV, and
+  specifies its subroutine will have the name "syn_ch_toplev".  As
+  mentioned before, subroutine names starting with "syn_ch_" are
+  explicitly reserved for application-specific syntax parsing routines.
+
+  <p>The TEST_SYN code that specifies the top level syntax parsing routine
+  must be modified accordingly.  The existing section of code is:
+
+</p><indent><p><pre>
+(*
+function syn_ch_xxx (                  {parse one top level construction}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {TRUE iff input matched expected syntax}
+  val_param; extern;
+*)
+
+var
+  top_syn_p: syn_parsefunc_p_t         {pointer to top syntax to parse}
+    := addr(syn_chsyn_command);
+</pre></p></indent>
+
+  <p>The variable <tt>top_syn_p</tt> must point to the parsing routine for
+  the top level syntax construction.  This is done in the last two lines
+  above by declaring the variable of type <tt>syn_parsefunc_p_t</tt> and
+  setting it to the initial value of the parsing routine address.  The
+  value of this variable is not changed in the program, so this is just a
+  way of specifying its fixed value.
+
+  <p>The SYN syntax parsing routines must always be present in the SYN
+  library, so they can not have names "syn_sy_xxx" to avoid colliding with
+  application-specific names.  Names "syn_chsyn_xxx" are specifically
+  reserved for SYN language parsing routines.  This is why
+  <tt>top_syn_p</tt> is set to the address of <tt>syn_chsyn_command</tt>,
+  above.  In the SYN language definition, the top level construction is
+  called COMMAND, and it's parsing routine has the name
+  "syn_chsyn_command".
+
+  <p>In our example, <tt>top_syn_p</tt> must be set to the address of
+  <tt>syn_ch_toplev</tt>.  However, symply changing the last line of the
+  source snippet above is unsufficient because the routine SYN_CH_TOPLEV
+  is not declared anywhere visible to this source file.  It only exists in
+  the code generated from compiling the custom syntax definition.
+
+  <p>A template declaration of a custom parsing routine is provided in the
+  TEST_SYN source, but commented out.  That is because all the SYN
+  language parsing functions <i>are</i> declared in the SYN library
+  include file.
+
+  <p>Therefore, to complete the customization of the TEST_SYN source to
+  the SYN_CH_TOPLEV top level parsing routine, uncomment the template
+  declaration and change its name accordingly.  The resulting source
+  snippet in this example would be:
+
+</p><indent><p><pre>
+function syn_ch_toplev (               {parse one top level construction}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {TRUE iff input matched expected syntax}
+  val_param; extern;
+
+var
+  top_syn_p: syn_parsefunc_p_t         {pointer to top syntax to parse}
+    := addr(syn_ch_toplev);
+</pre></p></indent>
+
+  </p></indent>
+
+<h2>Set input file name suffix</h2><indent>
+
+  <p>TEST_SYN requires that input files end in a fixed suffix, intended to
+  be unique to the particular syntax.  This suffix is set with the
+  constant <tt>fnam_suffix</tt>:
+
+</p><indent><p><pre>
+const
+  fnam_suffix = '.syn';                {mandatory input file name suffix}
+</pre></p></indent>
+
+  <p>Simply change ".syn" above.  In this example, we called the syntax ABC, so
+we will use the file name suffix ".abc":
+
+</p><indent><p><pre>
+const
+  fnam_suffix = '.abc';                {mandatory input file name suffix}
+</pre></p></indent>
+
+
+  </p></indent>
+
+<p>That's it.  The new program TEST_ABC will read text files with names
+ending in ".abc", parse them according to the ABC syntax (defined in
+ABC.SYN), and show the resulting syntax trees.
+
+<p>Note that the existing TEST_SYN program would be used to test the
+ABC.SYN file, while the new TEST_ABC program would be used to test files
+in the ABC language.
+
 
 <!-- -------------------------------------------------------------------------->
-<h1 id="cust_constr">Manually creating syntax parsing routine</h1>
+<h1 id="cust_constr">Manually creating syntax parsing routines</h1>
 
 
 <!-- -------------------------------------------------------------------------->

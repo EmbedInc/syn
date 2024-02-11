@@ -12,16 +12,16 @@ program test_syn;
 %include 'syn.ins.pas';
 %include 'builddate.ins.pas';
 
+const
+  fnam_suffix = '.syn';                {mandatory input file name suffix}
+  max_msg_args = 2;                    {max arguments we can pass to a message}
+
 (*
 function syn_ch_xxx (                  {parse one top level construction}
   in out  syn: syn_t)                  {SYN library use state}
   :boolean;                            {TRUE iff input matched expected syntax}
   val_param; extern;
 *)
-
-const
-  fnam_suffix = '.syn';                {mandatory input file name suffix}
-  max_msg_args = 2;                    {max arguments we can pass to a message}
 
 var
   top_syn_p: syn_parsefunc_p_t         {pointer to top syntax to parse}
