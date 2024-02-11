@@ -1,9 +1,19 @@
                              Program TEST_SYN
-                               2 April 2022
+                             11 February 2024
 
-test_syn [fnam]
+test_syn [options]
 
-Test program for the SYN library.  A SYN library syntax definition file is
-read, and the resulting syntax tree shown.  The mandatory ".syn" file name
-suffix may be omitted.  The default file name is T.SYN in the current
-directory.
+Program to test the syntax of a .SYN syntax defintion file.  The syntax
+definition file is parsed, and the resulting syntax trees shown.
+
+The command line options are:
+
+  -IN filename
+  filename
+
+    Provides the name of the syntax definition file to parse.  The second
+    form of this command line option without the -IN keyword is for
+    convenience when the file name does not start with a dash (-).  In
+    either case, the mandatory ".syn" file name suffix may be omitted.
+
+    The default input file name is "t.syn" in the current directory.

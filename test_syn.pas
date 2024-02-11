@@ -1,4 +1,4 @@
-{   Program TEST_SYN [fnam]
+{   Program TEST_SYN
 *
 *   Test program for the SYN library.  The input file is read as a syntax
 *   definition file.  The syntax tree resulting from parsing it is shown.
@@ -12,10 +12,21 @@ program test_syn;
 %include 'syn.ins.pas';
 %include 'builddate.ins.pas';
 
+(*
+function syn_ch_xxx (                  {parse one top level construction}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {TRUE iff input matched expected syntax}
+  val_param; extern;
+*)
+
 const
+  fnam_suffix = '.syn';                {mandatory input file name suffix}
   max_msg_args = 2;                    {max arguments we can pass to a message}
 
 var
+  top_syn_p: syn_parsefunc_p_t         {pointer to top syntax to parse}
+    := addr(syn_chsyn_command);
+
   fnam_in:                             {input file name}
     %include '(cog)lib/string_treename.ins.pas';
   iname_set: boolean;                  {TRUE if the input file name already set}
@@ -44,7 +55,7 @@ begin
 *   Initialize before reading the command line.
 }
   string_cmline_init;                  {init for reading the command line}
-  iname_set := false;                  {no input file name specified}
+  iname_set := false;                  {no input file name specified yet}
 {
 *   Back here each new command line option.
 }
@@ -63,9 +74,23 @@ next_opt:
     end;
   string_upcase (opt);                 {make upper case for matching list}
   string_tkpick80 (opt,                {pick command line option name from list}
-    '',
+    '-IN',
     pick);                             {number of keyword picked from list}
   case pick of                         {do routine for specific option}
+{
+*   -IN fnam
+*
+*   FNAM is the name of the input file to read.
+}
+1:  begin
+      if iname_set then begin          {input file name previously set ?}
+        sys_msg_parm_vstr (msg_parm[1], opt);
+        sys_message_bomb ('string', 'cmline_opt_conflict', msg_parm, 1);
+        end;
+      string_cmline_token (fnam_in, stat); {get next token as input file name}
+      sys_error_abort (stat, 'string', 'cmline_opt_err', nil, 0);
+      iname_set := true;               {input file name is now set}
+      end;
 {
 *   Unrecognized command line option.
 }
@@ -87,13 +112,12 @@ parm_bad:                              {jump here on got illegal parameter}
 done_opts:                             {done with all the command line options}
 
   if not iname_set then begin
-    string_vstring (fnam_in, 't.syn'(0), -1); {get default input file name}
+    string_vstring (fnam_in, 't'(0), -1); {get default input file name}
     end;
 {
-*   Read the input file into a FLINE collection.
+*   Read the input file into memory.  COLL_P is set pointing to the resulting
+*   collection of lines managed by the FLINE library.
 }
-  writeln ('Reading the input file into in-memory collection of lines.');
-
   fline_lib_new (                      {open the FLINE library}
     util_top_mem_context,              {parent memory context}
     fline_p,                           {returned pointer to new library use state}
@@ -102,12 +126,14 @@ done_opts:                             {done with all the command line options}
 
   fline_file_get_suff (                {read the input file into a collection}
     fline_p^,                          {FLINE library use state}
-    fnam_in, '.syn',                   {file name and mandatory suffix}
+    fnam_in, fnam_suffix,              {file name and mandatory suffix}
     coll_p,                            {returned pointer to the collection}
     stat);
   sys_error_abort (stat, '', '', nil, 0);
+
+  writeln ('Done reading "', coll_p^.name_p^.str:coll_p^.name_p^.len, '".');
 {
-*   Initialize for being able to parse successive commands from the input.
+*   Open the SYN library and initialize the parsing state.
 }
   syn_lib_new (                        {open the SYN library}
     util_top_mem_context,              {parent memory context}
@@ -115,17 +141,16 @@ done_opts:                             {done with all the command line options}
 
   syn_parse_pos_coll (syn_p^, coll_p^); {set parse position to start of input}
 {
-*   Parse each command from the input, then display its syntax tree.
+*   Parse each top level syntax construction in the input file.  Show the
+*   resulting syntax tree for each.
 }
-  writeln ('Parsing, building the syntax tree.');
-
-  while true do begin                  {back here to parse each new command}
+  while true do begin                  {back here for each new top level construction}
     writeln;
     match := syn_parse_next (          {parse from the current position}
       syn_p^,                          {SYN library use state}
-      addr(syn_chsyn_command));        {top level syntax construction to parse}
+      top_syn_p);                      {to top level syntax construction to parse}
     if match
-      then begin
+      then begin                       {no syntax error}
         writeln ('No syntax error');
         end
       else begin                       {syntax error found}
@@ -133,11 +158,12 @@ done_opts:                             {done with all the command line options}
         syn_parse_err_reparse (syn_p^); {re-parse up to error position}
         end
       ;
-
+    {
+    *   Show the syntax tree resulting from this top level syntax construction.
+    }
     syn_trav_init (syn_p^);            {init for traversing the syntax tree}
     syn_dbg_tree_show_n (syn_p^, nent); {show tree, get number of entries}
 
-    writeln;
     string_f_fp_eng (                  {make amount of memory used string}
       parm,                            {output string}
       nent * sizeof(syn_tent_t),       {bytes used by syntax tree entries}
