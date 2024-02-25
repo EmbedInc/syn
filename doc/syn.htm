@@ -6,7 +6,7 @@
 <body>
 
 <h1 class=page>Embed Syntaxer User's Guide</h1>
-<p class=page>Last updated 24 Feb 2024</p>
+<p class=page>Last updated 25 Feb 2024</p>
 
 <ul>
   <li><a href="#intro">Introduction</a><ul>
@@ -1446,12 +1446,380 @@ in the ABC language.
 <!-- -------------------------------------------------------------------------->
 <h1 id="cust_constr">Manually creating syntax parsing routines</h1>
 
+<p>Syntax parsing routines are normally created automatically from a SYN
+file.  However, they can also be created manually.  The requirements of
+such routines and the run-time support they use in the SYN library are
+documented here.
+
+<p>The definition of a syntax construction in a SYN file is generally more
+understandable, shorter, and easier to modify than the C code to implement
+that syntax.  There are also various rules that must be followed.  It is
+therefore recommended to let syntax parsing routines be automatically
+created from the syntax definition in a SYN file unless there is an
+overriding reason not to.  Such reasons can include:<ul>
+
+  <li>To perform application-specific actions during parsing.
+
+  <li>To implement features not available in the SYN language.
+
+  <li>For efficiency.  A specific syntax routine might not require all the
+  entry, exit, and other actions necessary in the general case.  It can
+  also be possible that a particular syntax is complicated to describe in
+  the SYN language, and can be implemented more simply with explicit code.
+
+  <p>However, unless parsing an input stream is truly time-critical and a
+  syntax construction is run many times in an inner loop, any efficiency
+  improvements are likely minor if not invisible to the user.
+  Understandability and ease of code maintainence are usually more
+  important concerns than minor efficiency gains.
+
+  </ul>
+
+<p>The routines in the SYN library that are used by syntax parsing
+routines have names starting with <tt>syn_p_</tt>.  Their interfaces are
+publicly declared in the SYN library include files (SYN.INS.PAS and
+SYN.H).
+
+<h2>Subroutine interface</h2><indent>
+
+  <p>All syntax parsing routines have the same required interface.  This
+  is formally defined in SYN.INS.PAS by the data type that is a pointer to
+  such a routine:
+
+</p><indent><p><pre>
+  syn_parsefunc_p_t = ^function (      {pointer to function to parse a construction}
+    in out syn: syn_t)                 {SYN library use state}
+    :boolean;                          {syntax matched, tree possibly extended}
+    val_param;
+</pre></p></indent>
+
+  <p>A pointer to the top level routine for the syntax to parse must be
+  passed to the SYN library to do the parsing and build the resulting
+  syntax tree.
+
+  <p>From the definition above, it can be seen that each syntax routine is
+  a function that takes the SYN library use state as its single argument,
+  and returns a boolean value.  That boolean value indicates whether the
+  input stream matched the syntax or not.
+
+  <p>A return value of TRUE means that the input matched the syntax, and
+  the result added to the syntax tree being built.
+
+  <p>A return value of FALSE means that the input did not match the
+  syntax, and the syntax tree was not altered.  The parsing state is also
+  reset to what it was on entry to the routine.  In other words, the
+  routine had no net effect on the parsing state or the syntax tree.  It
+  only indicated that the input did not match the specific syntax it
+  parses.
+
+  </p></indent>
+
+<h2>Creating subordinate syntax tree level</h2><indent>
+
+  <p>When compiled from a SYN file, each syntax construction is
+  implemented in its own routine, and creates its own subordinate level in
+  the resulting syntax tree.  However, that is only a convention.  A
+  subordinate syntax tree level can be created at any time with the
+  following routines:
+
+</p><indent><p><pre>
+procedure syn_p_constr_start (         {starting to parse a new syntax construction}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      name: string;                {name of syntax construction being checked}
+  in      namelen: sys_int_machine_t); {number of characters in NAME}
+  val_param; extern;
+
+procedure syn_p_constr_end (           {done parsing syntax construction, restore state}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      match: boolean);             {input matched construction, tree extended}
+  val_param; extern;
+</pre></p></indent>
+
+  <p>The first starts the new subordinate level, and the second ends it.
+  The syntax tree level name is provided when the syntax level is created.
+
+  <p>The parsing state is automatically saved when the level is created.
+  Note the MATCH parameter to the routine that ends the syntax level. This
+  indicates whether the input stream matched the syntax.  If the syntax
+  did not match, then the syntax tree level is deleted and the parsing
+  state is restored to when the syntax level was started.
+
+  <p>All automatically generated syntax parsing routines start with
+  <tt>syn_p_constr_start</tt>, and end with <tt>syn_p_constr_end</tt>.
+
+  </p></indent>
+
+<h2>Checking input stream characters</h2><indent>
+
+  <h3>Get next input character</h3><indent>
+
+    <p>As explained earlier, the syntaxer works by comparing the input
+    stream to the syntax definition character by character.  The low level
+    routine to get the next input character is:
+
+</p><indent><p><pre>
+function syn_p_ichar (                 {get next input char code, charcase applied}
+  in out  syn: syn_t)                  {SYN library use state}
+  :sys_int_machine_t;                  {0-255 character code, or SYN_ICHAR_xxx_K}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>This either returns the character code as an unsigned integer from
+    0 to 255, or one of the special characters defined by contants
+    SYN_ICHAR_xxx_K.  These special characters have values less than 0,
+    and are defined in SYN.INS.PAS as:
+
+</p><indent><p><pre>
+  syn_ichar_eol_k = -1;                {end of line}
+  syn_ichar_eof_k = -2;                {end of current file (end of subordinate collection)}
+  syn_ichar_eod_k = -3;                {end of all input data}
+  syn_ichar_err_k = -4;                {err char reached on error re-parse}
+</pre></p></indent>
+
+    <p>EOL is indicated at the end of every input line.  This includes
+    after the last line in a file.  A file that contains at least one line
+    therefore always ends with EOL followed by EOF.  An empty file causes
+    the single character EOF to be returned.
+
+    <p>EOF is always returned at the end of any file.  There can be
+    multiple EOFs in the input stream if there are nested files.  Each EOF
+    indicates the input is popping back to the parent file.  The top level
+    file, like all files, also ends in a EOF.
+
+    <p>EOD is returned after the end of all data, which is the end of the
+    top level input file.  Continued reading of the input stream will only
+    return more EOD characters.
+
+    <p>The special ERR character indicates the end of the syntax tree when
+    it resulted from an error re-parse.  ERR is never returned from a
+    syntax tree where the input matched the syntax.
+
+    </p></indent>
+
+  <h3>Character case</h3><indent>
+
+    <p>Input stream letters can be forced to be read in lower case, upper
+    case, or unaltered.  This is done with the following routine:
+
+</p><indent><p><pre>
+procedure syn_p_charcase (             {set charcase handling, restored at constr end}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      ccase: syn_charcase_k_t);    {the new input stream character case handling}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>The CCASE parameter must be one of the following enumerated values:
+
+</p><indent><p><pre>
+  syn_charcase_k_t = (                 {how to handle input stream character case}
+    syn_charcase_down_k,               {convert input to lower case}
+    syn_charcase_up_k,                 {convert input to upper case}
+    syn_charcase_asis_k);              {do not alter input stream characters (default)}
+</pre></p></indent>
+
+    <p>This case conversion only applies to characters returned by
+    <tt>syn_p_ichar</tt>.  Actual input stream characters are not altered.
+    Effectively, the character case setting is therefore only for syntax
+    checking.  Applications will get the unaltered input characters when
+    retrieving tagged sections of the input while traversing the syntax
+    tree.
+
+    <h4>Character case scope</h4><indent>
+
+      <p>A character case conversion setting stays in effect until the end
+      of the current syntax construction, as defined by
+      <tt>syn_p_constr_start</tt> and <tt>syn_p_constr_end</tt>.  The
+      current case conversion setting is inhereted when a syntax
+      construction is started.  A single setting before any parsing
+      therefore applies globally, but can be locally overridden separately
+      in each syntax construction.
+
+      <p>The default setting (<tt>syn_p_charcase</tt> never called) is
+      ASIS.  In other words, <tt>syn_p_ichar</tt> returns characters
+      exactly as they are in the input stream when no explicit character
+      case setting is made.
+
+      </p></indent>
+
+    </p></indent>
+
+  <h3>Higher level input-checking routines</h3><indent>
+
+    <p>Several convenience routines are supplied that get the next
+    character or characters and compare them to particular items.  These
+    routines are layered on <tt>syn_p_ichar</tt>, so the current input
+    stream character case conversion is applied.
+
+    <p>These layered convenience routines return TRUE to indicate the
+    input matched the expected value, and FALSE that it did not.  The
+    input stream position is left after the characters when they matched,
+    and is restored to before the characters when they did not match.  Put
+    another way, the input characters are "consumed" when the input
+    matched what was tested for.
+
+    <p>The convenience input-checking routines are:
+
+</p><indent><p><pre>
+function syn_p_test_eol (              {check for at end of current line}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {at end of line}
+  val_param; extern;
+
+function syn_p_test_eof (              {check for at end of current logical input file}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {at end of input data}
+  val_param; extern;
+
+function syn_p_test_eod (              {check for at end of input data}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {at end of input data}
+  val_param; extern;
+
+function syn_p_test_string (           {check input for matching string}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      str: string;                 {the string to compare to the input}
+  in      strlen: sys_int_machine_t)   {number of characters in STR}
+  :boolean;                            {input matched string, position left at end}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>The first three routines check for the special characters returned
+    by <tt>syn_p_ichar</tt>: End of line (EOL), end of file (EOF), and end
+    of all data (EOD).
+
+    <p>The last routine checks the input against a fixed string.
+
+    </p></indent>
+
+  </p></indent>
+
+<h2>Tagging input stream sections</h2><indent>
+
+  <p>As detailed earlier, sections of the input stream can be tagged and
+  referenced in the syntax tree.  A separate syntax tree entry is created
+  for each tag.  A tag syntax tree entry is created with the following
+  routines:
+
+</p><indent><p><pre>
+procedure syn_p_tag_start (            {start tagged section of input stream}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      id: sys_int_machine_t);      {tag ID}
+  val_param; extern;
+
+procedure syn_p_tag_end (              {end tagged section of input stream}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      match: boolean);             {input matched, create the tag}
+  val_param; extern;
+</pre></p></indent>
+
+  <p>To create a tag, it is first started with <tt>syn_p_tag_start</tt>.
+  Among other things, this saves the tag ID and the current location in
+  the input stream in the internal SYN library parsing state.
+
+  <p>Tag IDs must be 1 or greater.
+
+  <p>A tag is either finalized or deleted with <tt>syn_p_tag_end</tt>.
+  The MATCH parameter to <tt>syn_p_tag_end</tt> is used to indicate
+  whether the input stream matched the required syntax since the tag was
+  started.
+
+  <p>When MATCH is TRUE, the tag is created and finalized to end at the
+  current input stream position.
+
+  <p>When MATCH is FALSE, creation of the tag is aborted, and state
+  restored to what it was when <tt>syn_p_tag_start</tt> was called.  This
+  includes the syntax tree state and the input parsing state.  The effect
+  is as if <tt>syn_p_tag_start</tt> was never called, and no parsing
+  activity occurred since then.
+
+  <p>A new tag can be started before a previous one is finished.  However,
+  tags are only created and ended in strict nesting order.  Only the
+  last-started tag can be ended.
+
+  <p>When a tag is ended with MATCH = FALSE, all new syntax tree entries
+  since the tag was started are deleted.  <tt>syn_p_tag_end</tt> with
+  MATCH = FALSE always restores the syntax tree and input stream state to
+  when its matching <tt>tag_p_start</tt> was called, regardless of what
+  may have been written to the syntax tree since then.
+
+  </p></indent>
+
+<h2>Saving and restoring input stream positions</h2><indent>
+
+  <p>Checking the input stream against a particular syntax can sometimes
+  require going back to an earlier position and trying again with a
+  different choice thru the syntax definition.  There are two ways for
+  parsing routines to save and restore input stream positions.
+
+  <h3>Getting/setting input stream position explicitly</h3><indent>
+
+    <p>The input stream position can be read at any time, and explicitly
+    set to a previously saved position:
+
+</p><indent><p><pre>
+procedure syn_p_cpos_get (             {get the current parsing character position}
+  in out  syn: syn_t;                  {SYN library use state}
+  out     pos: fline_cpos_t);          {returned parsing position}
+  val_param; extern;
+
+procedure syn_p_cpos_set (             {set the current parsing character position}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      pos: fline_cpos_t);          {character position to go to}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>In this case, the application is responsible for maintaining the
+    <tt>fline_cpos_t</tt> structure that the input stream position is
+    saved in.  The application can have any number of such structures with
+    saved positions in them, and can go back to any of them at any time.
+
+    <p>There is no requirement that a particular position ever be
+    restored, or in what order saved positions are restored.
+
+    <p>The SYN library saves no state on its own when
+    <tt>syn_p_cpos_get</tt> is called.  It has no knowledge of positions
+    that the application might have saved.
+
+    </p></indent>
+
+  <h3>Pushing/popping input stream position</h3><indent>
+
+    <p>The SYN library also provides an input stream position stack for
+    use by parsing routines:
+
+</p><indent><p><pre>
+procedure syn_p_cpos_push (            {push input character position onto parse stack}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_p_cpos_pop (             {pop input character position from parse stack}
+  in out  syn: syn_t;                  {SYN library use state}
+  in      match: boolean);             {syntax matched, continue at curr input position}
+  val_param; extern;
+</pre></p></indent>
+
+    <p>Input stream positions are saved onto an internal stack, and can
+    only be restored in nested order.  Individual saved positions are not
+    accessible to the application directly.
+
+    <p>These stack-based routines have the additional feature of handling
+    whether the input matched the expected syntax between a PUSH and POP.
+    This is done by passing the MATCH parameter to
+    <tt>syn_p_cpos_pop</tt>.
+
+    <p>When MATCH = TRUE, the stack entry is popped and discarded.  The
+    input stream position remains where it was.
+
+    <p>When MATCH = FALSE, the input stream position is restored to the
+    popped state.
+
+    </p></indent>
+
+  </p></indent>
+
 
 <!-- -------------------------------------------------------------------------->
 <h1 id="syncalc">SYNCALC Example Application</h1>
 
 
 </body></html>
-
-</p><indent><p><pre>
-</pre></p></indent>
