@@ -7,4 +7,5 @@ rem
 setlocal
 call build_pasinit
 
-src_progl test_calc -link calc.obj
+src_progl calc -link calc_syn.obj
+src_progl test_calc -link calc_syn.obj
