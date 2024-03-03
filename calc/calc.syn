@@ -6,18 +6,17 @@
 .symbol space                          /* one separator required, more allowed
 .symbol variable                       /* name of a variable
 .symbol number                         /* numeric literal
-.symbol value                          /* numeric value, literal or variable
-.symbol operation                      /* one mathematical operation
-.symbol operation2
-.symbol operation3
-.symbol command                        /* command, can alter current value
+.symbol value                          /* numeric value
+.symbol command                        /* one command
+.symbol expression                     /* series of commands
 .symbol oneline [syn_ch_oneline]       /* one complete input line
 
 .define pad .as                        /* separator allowed
   .occurs[0 to inf] " "
 
 .define space .as                      /* separator required
-  .occurs[1 to inf] " "
+  (.occurs[1 to inf] " ") .or
+  .upto .eol
 
 .define variable .as                   /* name of one calculator variable
   .range["A" thru "Z"]
@@ -25,61 +24,53 @@
   .occurs[0 to inf] .range["A" thru "Z"]
 
 .define number .as                     /* hex int, decimal int, or decimal FP
-  ("+"[1] .or "-"[2] .or .null[1])     /* optional leading sign
+  ("+"[1] .or "-"[2] .or .null[3])     /* optional leading sign
   ("h" .charcase[upper]                /* hexidecimal integer
-    .occurs[1 to inf] (
-      .range["0" thru "9"] .or
-      .range["A" thru "F"]
-      )
-    )[2] .or
+    (
+      .occurs[1 to inf] (
+        .range["0" thru "9"] .or
+        .range["A" thru "F"]
+        )
+      )[4]
+    ) .or
   (                                    /* decimal floating point
-    .occurs[0 to inf] .range["0" thru "9"]
-    "."
-    .occurs[0 to inf] .range["0" thru "9"]
-    .optional (
-      ("+" .or "-" .or .null)
-      "e"
-      .occurs[1 to inf] .range["0" thru "9"]
-      )
-    )[3] .or
-  (.occurs[1 to inf] .range["0" thru "9"])[1] /* decimal integer
+    (
+      .occurs[0 to inf] .range["0" thru "9"]
+      "."
+      .occurs[0 to inf] .range["0" thru "9"]
+      .optional (
+        "e"
+        ("+" .or "-" .or .null)
+        .occurs[1 to inf] .range["0" thru "9"]
+        )
+      )[5]
+    ) .or
+  (.occurs[1 to inf] .range["0" thru "9"])[6] /* decimal integer
 
-.define value .as                      /* numeric value, constant or variable
-  number[1] .or variable[2]
+.define value .as                      /* numeric value
+  number[1] .or
+  variable[2] .or
+  ("(" pad expression[3] pad ")") .or
+  ("pi"[4] space) .or
+  ("e"[5] space)
 
-.define operation .as                  /* one mathematical operation
-  operation2[1]
-  .occurs[0 to inf] (
-    ("+"[1] .or "-"[2]) pad
-    operation2[1]
-    )
+.define command .as                    /* one command
+  value[1] .or
+  ("sqrt"[2] space) .or
+  ("ln"[3] space) .or
+  ("log"[4] space) .or
+  ("log2"[5] space) .or
+  ("+" pad value[6]) .or
+  ("-" pad value[7]) .or
+  ("*" pad value[8]) .or
+  ("/" pad value[9]) .or
+  ("^" pad value[10]) .or
+  ("put" space variable[11])
 
-.define operation2 .as
-  operation3[1]
-  .occurs[0 to inf] (
-    ("*"[3] .or "/"[4]) pad
-    operation3[1]
-    )
-
-.define operation3 .as
-  command[1]
-  .occurs[0 to inf] (
-    "^"[5] pad
-    value[1]
-    )
-
-.define command .as                    /* command, can operate on current value
-  ("(" pad operation[1] pad ")") .or
-  value[2] .or
-  ("put" space variable[3]) .or
-  "sqrt"[4] .or
-  "ln"[5] .or
-  "log2"[6] .or
-  "log"[7] .or
-  "pi"[8] .or
-  "e"[9]
+.define expression .as                 /* sequence of commands
+  .occurs[1 to inf] (pad command[1])
 
 .define oneline .as                    /* one complete input line
-  .occurs[0 to inf] (pad operation[1])
+  (expression[1] .or .null) pad
   .eol
   .occurs[0 to inf] .eof
