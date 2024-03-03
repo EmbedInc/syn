@@ -1,0 +1,85 @@
+/*   Syntax definition for the input to the CALC demonstartion program.  The
+/*   CALC program implements basic calculator functions as a demonstration of
+/*   using the syntaxer.
+/*
+.symbol pad                            /* separator allowed but not required
+.symbol space                          /* one separator required, more allowed
+.symbol variable                       /* name of a variable
+.symbol number                         /* numeric literal
+.symbol value                          /* numeric value, literal or variable
+.symbol operation                      /* one mathematical operation
+.symbol operation2
+.symbol operation3
+.symbol command                        /* command, can alter current value
+.symbol oneline [syn_ch_oneline]       /* one complete input line
+
+.define pad .as                        /* separator allowed
+  .occurs[0 to inf] " "
+
+.define space .as                      /* separator required
+  .occurs[1 to inf] " "
+
+.define variable .as                   /* name of one calculator variable
+  .range["A" thru "Z"]
+  .charcase[upper]
+  .occurs[0 to inf] .range["A" thru "Z"]
+
+.define number .as                     /* hex int, decimal int, or decimal FP
+  ("+"[1] .or "-"[2] .or .null[1])     /* optional leading sign
+  ("h" .charcase[upper]                /* hexidecimal integer
+    .occurs[1 to inf] (
+      .range["0" thru "9"] .or
+      .range["A" thru "F"]
+      )
+    )[2] .or
+  (                                    /* decimal floating point
+    .occurs[0 to inf] .range["0" thru "9"]
+    "."
+    .occurs[0 to inf] .range["0" thru "9"]
+    .optional (
+      ("+" .or "-" .or .null)
+      "e"
+      .occurs[1 to inf] .range["0" thru "9"]
+      )
+    )[3] .or
+  (.occurs[1 to inf] .range["0" thru "9"])[1] /* decimal integer
+
+.define value .as                      /* numeric value, constant or variable
+  number[1] .or variable[2]
+
+.define operation .as                  /* one mathematical operation
+  operation2[1]
+  .occurs[0 to inf] (
+    ("+"[1] .or "-"[2]) pad
+    operation2[1]
+    )
+
+.define operation2 .as
+  operation3[1]
+  .occurs[0 to inf] (
+    ("*"[3] .or "/"[4]) pad
+    operation3[1]
+    )
+
+.define operation3 .as
+  command[1]
+  .occurs[0 to inf] (
+    "^"[5] pad
+    value[1]
+    )
+
+.define command .as                    /* command, can operate on current value
+  ("(" pad operation[1] pad ")") .or
+  value[2] .or
+  ("put" space variable[3]) .or
+  "sqrt"[4] .or
+  "ln"[5] .or
+  "log2"[6] .or
+  "log"[7] .or
+  "pi"[8] .or
+  "e"[9]
+
+.define oneline .as                    /* one complete input line
+  .occurs[0 to inf] (pad operation[1])
+  .eol
+  .occurs[0 to inf] .eof
