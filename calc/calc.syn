@@ -4,7 +4,7 @@
 /*
 .symbol pad                            /* separator allowed but not required
 .symbol space                          /* one separator required, more allowed
-.symbol variable                       /* name of a variable
+.symbol symbol                         /* name of a symbol, like a variable
 .symbol number                         /* numeric literal
 .symbol value                          /* numeric value
 .symbol command                        /* one command
@@ -18,10 +18,13 @@
   (.occurs[1 to inf] " ") .or
   .upto .eol
 
-.define variable .as                   /* name of one calculator variable
+.define symbol .as                     /* symbol name
   .range["A" thru "Z"]
   .charcase[upper]
-  .occurs[0 to inf] .range["A" thru "Z"]
+  .occurs[0 to inf] (
+    .range["A" thru "Z"] .or
+    .range["0" thru "9"]
+    )
 
 .define number .as                     /* hex int, decimal int, or decimal FP
   ("+"[1] .or "-"[2] .or .null[3])     /* optional leading sign
@@ -49,7 +52,7 @@
 
 .define value .as                      /* numeric value
   number[1] .or
-  variable[2] .or
+  (symbol[2] space) .or
   ("(" pad expression[3] pad ")") .or
   ("pi"[4] space) .or
   ("e"[5] space)
@@ -65,7 +68,7 @@
   ("*" pad value[8]) .or
   ("/" pad value[9]) .or
   ("^" pad value[10]) .or
-  ("put" space variable[11])
+  ("put" space symbol[11] space)
 
 .define expression .as                 /* sequence of commands
   .occurs[1 to inf] (pad command[1])
