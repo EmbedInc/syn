@@ -148,6 +148,8 @@ const
   max_msg_args = 2;                    {max arguments we can pass to a message}
 
 var
+  entype: syn_tent_k_t;                {type of entry where error occurred}
+  tag: sys_int_machine_t;              {tag number of current entry}
   name: string_var32_t;                {name of current syntax construction}
   name2: string_var32_t;               {name of other syntax construction}
   msg_parm:                            {references arguments passed to a message}
@@ -161,13 +163,15 @@ begin
   sys_message_parms (subsys, msg, parms, nparms); {write caller's error message}
 
   syn_trav_level_name (syn, name);     {get name of this syntax construction}
+  entype := syn_trav_type (syn);       {get type of syntax tree entry}
+  tag := syn_trav_tag (syn);           {get tag number of this tree entry}
 
-  case syn.tent_p^.ttype of            {what type of syntax tree entry is here ?}
-syn_ttype_lev_k: begin
+  case entype of                       {what type of syntax tree entry is here ?}
+syn_tent_lev_k: begin
       sys_msg_parm_vstr (msg_parm[1], name);
       sys_message_parms ('syn', 'tag_lev_start', msg_parm, 1);
       end;
-syn_ttype_sub_k: begin
+syn_tent_sub_k: begin
       sys_msg_parm_vstr (msg_parm[1], name);
       if syn.tent_p^.sub_p^.lev_name_p <> nil then begin
         string_copy (syn.tent_p^.sub_p^.lev_name_p^, name2);
@@ -175,16 +179,16 @@ syn_ttype_sub_k: begin
       sys_msg_parm_vstr (msg_parm[2], name2);
       sys_message_parms ('syn', 'tag_sub', msg_parm, 2);
       end;
-syn_ttype_tag_k: begin
+syn_tent_tag_k: begin
       sys_msg_parm_vstr (msg_parm[1], name);
-      sys_msg_parm_int (msg_parm[2], syn.tent_p^.tag);
+      sys_msg_parm_int (msg_parm[2], tag);
       sys_message_parms ('syn', 'tag_unexpected', msg_parm, 2);
       end;
-syn_ttype_end_k: begin
+syn_tent_end_k: begin
       sys_msg_parm_vstr (msg_parm[1], name);
       sys_message_parms ('syn', 'tag_lev_end', msg_parm, 1);
       end;
-syn_ttype_err_k: begin
+syn_tent_err_k: begin
       sys_message_parms ('syn', 'tag_err', nil, 0);
       end;
 otherwise

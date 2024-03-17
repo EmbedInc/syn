@@ -18,6 +18,7 @@ var
   tag: sys_int_machine_t;              {tag indicating the command}
   tagstr: string_var8192_t;            {tagged string}
   fp: double;                          {scratch floating point value}
+  v: val_t;                            {scratch calculator value}
 
 begin
   tagstr.max := size_char(tagstr.str); {init local var string}
@@ -35,6 +36,8 @@ begin
   case tag of                          {which command is this ?}
 
 1: begin                               {VALUE}
+  calc_proc_value (v);                 {get the value}
+  currval := v;                        {update the current value}
   end;
 
 2: begin                               {sqrt}

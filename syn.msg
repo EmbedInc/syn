@@ -90,11 +90,6 @@ msg syntax_error_eod
   lan english -def
     The end of the top level input file was the first character
     that did not match the syntax template.
-msg tag_unexpected
-  lan english -def
-    Unexpected syntax tag value of %p1i.  This should not occurr, and is
-    probably due to syntax definition file and source code being out of
-    sync.  Get traceback to find location of error.
 
 /*******************************************************************************
 /*
@@ -137,5 +132,5 @@ msg tag_unexpected
   lan english -def
     Unexpected syntax tag value of %p2i was found in syntax construction
     "%p1s".  This should not occurr, and is probably due to the syntax
-    definition file and source code being out of sync.  The error occurred
+    definition file and source code being out of sync.  Error encountered
     at:
