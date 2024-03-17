@@ -300,6 +300,10 @@ procedure syn_dbg_tree_internal (      {show syntax tree, internal details}
   in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;
 
+procedure syn_dbg_tree_ent_show (      {show current syntax tree entry}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
 procedure syn_dbg_tree_show (          {show syntax tree, user-level details}
   in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;

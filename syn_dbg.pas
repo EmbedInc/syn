@@ -4,6 +4,7 @@ module syn_dbg;
 define syn_dbg_tree_internal;
 define syn_dbg_tree_show_n;
 define syn_dbg_tree_show;
+define syn_dbg_tree_ent_show;
 %include 'syn2.ins.pas';
 {
 ********************************************************************************
@@ -288,4 +289,56 @@ var
 
 begin
   syn_dbg_tree_show_n (syn, nent);
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_DBG_TREE_ENT_SHOW (SYN)
+*
+*   Show the current syntax tree entry.
+}
+procedure syn_dbg_tree_ent_show (      {show current syntax tree entry}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param;
+
+var
+  level: sys_int_machine_t;            {levels down from top}
+  entype: syn_tent_k_t;                {syntax tree entry type ID}
+  name: string_var32_t;                {name of current level}
+  tag: sys_int_machine_t;              {entry tag number}
+  tagstr: string_var132_t;             {tagged string}
+
+begin
+  name.max := size_char(name.str);     {init local var strings}
+  tagstr.max := size_char(tagstr.str);
+
+  level := syn_trav_level (syn);       {get number of levels down from top}
+  entype := syn_trav_type (syn);       {get type of this tree entry}
+  syn_trav_level_name (syn, name);     {get name of this syntax construction}
+
+  indent (level);                      {show nesting level with indentation}
+  write (name.str:name.len, ': ');     {show syntax construction name}
+
+  case entype of                       {what kind of syntax tree entry is this ?}
+syn_tent_lev_k: begin
+      write ('start');
+      end;
+syn_tent_sub_k: begin
+      write ('sub level');
+      end;
+syn_tent_tag_k: begin
+      tag := syn_trav_tag (syn);       {get the tag number}
+      syn_trav_tag_string (syn, tagstr); {get the tagged string}
+      write ('tag ', tag, ' "', tagstr.str:tagstr.len, '"');
+      end;
+syn_tent_end_k: begin
+      write ('end');
+      end;
+syn_tent_err_k: begin
+      write ('error end');
+      end;
+otherwise
+    write ('unexpected entry type ID ', ord(entype));
+    end;
+  writeln;
   end;

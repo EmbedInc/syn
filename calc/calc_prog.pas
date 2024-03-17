@@ -2,6 +2,7 @@
 }
 module calc_prog;
 define calc_prog_init;
+define calc_prog_start;
 %include 'calc.ins.pas';
 {
 ********************************************************************************
@@ -29,5 +30,24 @@ begin
     [],                                {no special configuration}
     mem_p^);                           {parent memory context}
 
-  currval := 0.0;
+  calc_val_default (currval);          {init current value to global default}
+
+  trace := false;
+  err := false;
+  quit := false;
+  end;
+{
+********************************************************************************
+*
+*   Subroutine CALC_PROG_START
+*
+*   Initialize and start basic program operation.  The global state must have
+*   been previously initialized, and the command line read with state updated
+*   accordingly.
+}
+procedure calc_prog_start;             {initialize and start basic program operation}
+  val_param;
+
+begin
+  syn_lib_new (mem_p^, syn_p);         {start our use of the SYN library}
   end;

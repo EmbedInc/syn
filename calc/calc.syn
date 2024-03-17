@@ -68,12 +68,13 @@
   ("*" pad value[8]) .or
   ("/" pad value[9]) .or
   ("^" pad value[10]) .or
-  ("put" space symbol[11] space)
+  ("put" space symbol[11] space) .or
+  ("q"[12] space)
 
 .define expression .as                 /* sequence of commands
-  .occurs[1 to inf] (pad command[1])
+  .occurs[1 to inf] (pad command)
 
 .define oneline .as                    /* one complete input line
-  (expression[1] .or .null) pad
+  (expression .or .null) pad
   .eol
   .occurs[0 to inf] .eof

@@ -196,5 +196,16 @@ function syn_parse_end (               {check for at end of input}
   val_param;
 
 begin
-  syn_parse_end := fline_cpos_eof (syn.parse_p^.pos);
+{
+*   Use the current parsing position, if it exists.
+}
+  if syn.parse_p <> nil then begin     {current parsing position exists ?}
+    syn_parse_end := fline_cpos_eof (syn.parse_p^.pos);
+    return;
+    end;
+{
+*   There is no current parsing position.  This means parsing has not started.
+*   Use the parsing start position.
+}
+  syn_parse_end := fline_cpos_eof (syn.pos_start);
   end;

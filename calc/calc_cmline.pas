@@ -43,9 +43,15 @@ next_opt:
   sys_error_abort (stat, 'string', 'cmline_opt_err', nil, 0);
   string_upcase (opt);                 {make upper case for matching list}
   string_tkpick80 (opt,                {pick command line option name from list}
-    '',
+    '-TRACE',
     pick);                             {number of keyword picked from list}
   case pick of                         {do routine for specific option}
+{
+*   -TRACE
+}
+1: begin
+      trace := true;
+      end;
 {
 *   Unrecognized command line option.
 }
