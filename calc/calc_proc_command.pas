@@ -8,8 +8,8 @@ define calc_proc_command;
 *
 *   Subroutine CALC_PROC_COMMAND
 *
-*   Process the COMMAND syntax.  The next syntax tree entry is for the
-*   subordinate COMMAND construction.
+*   Process the COMMAND syntax.  The current syntax tree entry is the start of
+*   the COMMAND tree level.
 }
 procedure calc_proc_command;           {process the COMMAND syntax}
   val_param;
@@ -22,11 +22,6 @@ var
 
 begin
   tagstr.max := size_char(tagstr.str); {init local var string}
-
-  if not syn_trav_next_down (syn_p^) then begin {down into COMMAND}
-    err := true;
-    return;
-    end;
 
   tag := syn_trav_next_tag (syn_p^);   {get tag for command ID}
   if trace then begin                  {syntax tracing debug enabled ?}
@@ -87,6 +82,4 @@ otherwise
     writeln ('INTERNAL ERROR: Unexpected COMMAND tag ', tag);
     err := true;
     end;                               {end of command tag cases}
-
-  discard( syn_trav_up (syn_p^) );     {back up from COMMAND syntax}
   end;

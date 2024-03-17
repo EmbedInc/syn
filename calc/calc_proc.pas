@@ -66,10 +66,17 @@ begin
     if trace then begin                {syntax tracing debug enabled ?}
       syn_dbg_tree_ent_show (syn_p^);
       end;
-    if syn_trav_type(syn_p^) = syn_tent_end_k then exit; {end of EXPRESSION ?}
-    calc_proc_command;                 {process the next command}
-    if err then exit;                  {abort on error}
-    end;
+    if syn_trav_next_down (syn_p^)
+      then begin                       {got into subordinate COMMAND level}
+        calc_proc_command;             {process the COMMAND syntax}
+        discard( syn_trav_up (syn_p^) ); {back up from COMMAND syntax}
+        if err then exit;              {abort on error}
+        end
+      else begin                       {no new subordinate level}
+        exit;
+        end
+      ;
+    end;                               {back to do next command in expression}
   discard( syn_trav_up (syn_p^) );     {back up from EXPRESSION syntax}
 
 leave:
@@ -121,10 +128,8 @@ begin
       calc_val_set_fp (3.141592653589793, v);
       end;
 
-(*
 5:  begin                              {e}
       end;
-*)
 
 otherwise
     syn_msg_tag_err (syn_p^, '', '', nil, 0);
