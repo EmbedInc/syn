@@ -42,6 +42,7 @@ loop:
 
   if fline_p <> nil then begin         {we have FLINE library open ?}
     fline_lib_end (fline_p);           {end this use of the FLINE library}
+    coll_p := nil;                     {current collection no longer exists}
     end;
   fline_lib_new (mem_p^, fline_p, stat); {create a new use of the FLINE library}
   if sys_error(stat) then return;

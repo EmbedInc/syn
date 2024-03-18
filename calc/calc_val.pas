@@ -1,12 +1,29 @@
 {   Manipulating calculator values.
 }
 module calc_val;
+define calc_val_set_int;
 define calc_val_set_fp;
 define calc_val_default;
 define calc_val_fp;
 define calc_val_make_fp;
 define calc_val_show;
 %include 'calc.ins.pas';
+{
+********************************************************************************
+*
+*   Subroutine CALC_VAL_SET_INT (INT, V)
+*
+*   Set the calculator value descriptor V to the nearest integer value of INT.
+}
+procedure calc_val_set_int (           {set calc value to integer}
+  in      int: double;                 {integer value, will be rounded}
+  out     v: val_t);                   {resulting calculator value descriptor}
+  val_param;
+
+begin
+  v.valtype := valtype_int_k;
+  v.int := round(int);
+  end;
 {
 ********************************************************************************
 *

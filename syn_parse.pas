@@ -26,6 +26,7 @@ begin
   fline_cpos_coll_start (              {get start of collection position}
     syn.pos_start,                     {returned position}
     coll);                             {collection to set position to start of}
+  syn.parse_p := nil;                  {reset to no current parse position}
   end;
 {
 ********************************************************************************

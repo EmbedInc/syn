@@ -27,14 +27,19 @@
     )
 
 .define number .as                     /* hex int, decimal int, or decimal FP
-  ("+"[1] .or "-"[2] .or .null[3])     /* optional leading sign
+  ("+"[1] .or "-"[2] .or .null[1])     /* optional leading sign
   ("h" .charcase[upper]                /* hexidecimal integer
     (
       .occurs[1 to inf] (
         .range["0" thru "9"] .or
         .range["A" thru "F"]
         )
-      )[4]
+      )[1]
+    ) .or
+  ("b" .charcase[upper]                /* binary integer
+    (
+      .occurs[1 to inf] .range["0" thru "1"]
+      )[2]
     ) .or
   (                                    /* decimal floating point
     (
@@ -46,9 +51,9 @@
         ("+" .or "-" .or .null)
         .occurs[1 to inf] .range["0" thru "9"]
         )
-      )[5]
+      )[3]
     ) .or
-  (.occurs[1 to inf] .range["0" thru "9"])[6] /* decimal integer
+  (.occurs[1 to inf] .range["0" thru "9"])[4] /* decimal integer
 
 .define value .as                      /* numeric value
   number[1] .or

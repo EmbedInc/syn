@@ -115,6 +115,11 @@ procedure calc_val_set_fp (            {set calc value to floating point}
   out     v: val_t);                   {resulting calculator value descriptor}
   val_param; extern;
 
+procedure calc_val_set_int (           {set calc value to integer}
+  in      int: double;                 {integer value, will be rounded}
+  out     v: val_t);                   {resulting calculator value descriptor}
+  val_param; extern;
+
 procedure calc_val_show (              {show a calculator value}
   in      v: val_t);                   {the value to show}
   val_param; extern;

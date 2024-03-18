@@ -48,6 +48,8 @@ begin
 
   util_stack_dalloc (syn.stack);       {delete the temp state stack}
   syn.stack_exist := false;            {indicate the stack does not exist}
+  syn.parse_p := nil;                  {invalidate pointers into stack}
+  syn.travstk_p := nil;
   end;
 {
 ********************************************************************************
