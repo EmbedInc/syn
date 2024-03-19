@@ -2,8 +2,10 @@
 }
 module calc_sym;
 define calc_sym_valid;
+define calc_sym_err;
 define calc_sym_get;
 define calc_sym_dat;
+define calc_sym_find_var;
 %include 'calc.ins.pas';
 {
 ********************************************************************************
@@ -29,6 +31,31 @@ begin
 
   calc_sym_valid := true;              {symbol name passed all the tests}
   return;
+  end;
+{
+********************************************************************************
+*
+*   Function CALC_SYM_ERR (NAME)
+*
+*   Check for an error in the symbol name NAME.  If an error is found, then a
+*   message is written and the function returns TRUE.  Otherwise, the function
+*   returns FALSE.
+}
+function calc_sym_err (                {check sym name, emit message on error}
+  in      name: univ string_var_arg_t) {symbol name to check}
+  :boolean;                            {error in symbol name, message written}
+  val_param;
+
+begin
+  if calc_sym_valid (name)
+    then begin                         {the symbol name is valid}
+      calc_sym_err := false;
+      end
+    else begin                         {invalid symbol name}
+      writeln ('"', name.str:name.len, '" is not a valid symbol name.');
+      calc_sym_err := true;
+      end
+    ;
   end;
 {
 ********************************************************************************
@@ -95,5 +122,30 @@ begin
     name_p,                            {returned pointer to name in symbol table}
     dat_p);                            {returned pointer to symbol data}
 
-  dat_p^.var_val := 0.0;               {init symbol data to default}
+  dat_p^.symtype := symtype_unset_k;   {initialize the symbol type to unset}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine CALC_SYM_FIND_VAR (NAME, DAT_P)
+*
+*   Find the symbol NAME in the symbol table, and return DAT_P pointing to its
+*   data.  If the symbol does not exist, it is created as a variable and its
+*   value initialized to the global default.
+*
+*   If the symbol previously exists, then it might not be a variable.  To
+*   determine this, the caller must check the symbol type in the symbol data.
+}
+procedure calc_sym_find_var (          {find variable, create as var if not exist}
+  in      name: univ string_var_arg_t; {symbol name}
+  out     dat_p: symdat_p_t);          {returned pointer to symbol data}
+  val_param;
+
+begin
+  calc_sym_dat (name, dat_p);          {find or create the symbol}
+
+  if dat_p^.symtype = symtype_unset_k then begin {type not set yet ?}
+    dat_p^.symtype := symtype_var_k;   {make it a variable}
+    calc_val_default (dat_p^.var_val); {initialize the value to default}
+    end;
   end;

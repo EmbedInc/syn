@@ -73,7 +73,7 @@
   ("*" pad value[8]) .or
   ("/" pad value[9]) .or
   ("^" pad value[10]) .or
-  ("put" space symbol[11] space) .or
+  ("set" space symbol[11] space) .or
   ("q"[12] space)
 
 .define expression .as                 /* sequence of commands

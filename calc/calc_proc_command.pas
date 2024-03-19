@@ -19,6 +19,10 @@ var
   tagstr: string_var8192_t;            {tagged string}
   fp: double;                          {scratch floating point value}
   v: val_t;                            {scratch calculator value}
+  dat_p: symdat_p_t;                   {pointer to symbol data}
+
+label
+  error;
 
 begin
   tagstr.max := size_char(tagstr.str); {init local var string}
@@ -71,7 +75,15 @@ begin
 10: begin                              {^}
   end;
 
-11: begin                              {put}
+11: begin                              {set}
+  syn_trav_tag_string (syn_p^, tagstr); {get the variable name}
+  if calc_sym_err (tagstr) then goto error; {invalid symbol name ?}
+  calc_sym_find_var (tagstr, dat_p);   {get pointer to data for this var}
+  if dat_p^.symtype <> symtype_var_k then begin
+    writeln ('Symbol "', tagstr.str:tagstr.len, '" is not a variable.');
+    goto error;
+    end;
+  dat_p^.var_val := currval;           {assign the current value to the variable}
   end;
 
 12: begin
@@ -80,6 +92,8 @@ begin
 
 otherwise
     writeln ('INTERNAL ERROR: Unexpected COMMAND tag ', tag);
+error:
+    writeln;
     err := true;
     end;                               {end of command tag cases}
   end;

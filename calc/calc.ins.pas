@@ -13,11 +13,6 @@ const
   symlen = 32;                         {max symbol length, characters}
 
 type
-  symdat_p_t = ^symdat_t;
-  symdat_t = record                    {data for each symbol table entry}
-    var_val: double;                   {variable value}
-    end;
-
   valtype_k_t = (                      {types of numeric values}
     valtype_int_k,                     {integer}
     valtype_fp_k);                     {floating point}
@@ -30,6 +25,21 @@ valtype_int_k: (                       {integer}
       );
 valtype_fp_k: (                        {floating point}
       fp: double;
+      );
+    end;
+
+  symtype_k_t = (                      {types of symbols in the symbol table}
+    symtype_unset_k,                   {symbol type not set yet, used internally}
+    symtype_var_k);                    {variable}
+
+  symdat_p_t = ^symdat_t;
+  symdat_t = record                    {data for each symbol table entry}
+    symtype: symtype_k_t;              {type of this symbol}
+    case symtype_k_t of
+symtype_unset_k: (                     {type not set yet}
+      );
+symtype_var_k: (                       {variable}
+      var_val: val_t;                  {current value}
       );
     end;
 
@@ -82,7 +92,17 @@ procedure calc_prog_init;              {initialize global program state}
 procedure calc_prog_start;             {initialize and start basic program operation}
   val_param; extern;
 
+function calc_sym_err (                {check sym name, emit message on error}
+  in      name: univ string_var_arg_t) {symbol name to check}
+  :boolean;                            {error in symbol name, message written}
+  val_param; extern;
+
 procedure calc_sym_dat (               {get data on symbol, create if not existing}
+  in      name: univ string_var_arg_t; {symbol name}
+  out     dat_p: symdat_p_t);          {returned pointer to symbol data}
+  val_param; extern;
+
+procedure calc_sym_find_var (          {find variable, create if needed, err if not var}
   in      name: univ string_var_arg_t; {symbol name}
   out     dat_p: symdat_p_t);          {returned pointer to symbol data}
   val_param; extern;

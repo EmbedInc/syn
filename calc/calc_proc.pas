@@ -99,6 +99,10 @@ procedure calc_proc_value (            {process VALUE syntax, return the value}
 var
   tag: sys_int_machine_t;              {value type tag}
   tagstr: string_var80_t;              {tagged string}
+  dat_p: symdat_p_t;                   {to symbol data}
+
+label
+  error, leave;
 
 begin
   tagstr.max := size_char(tagstr.str); {init local var string}
@@ -121,6 +125,18 @@ begin
       end;
 
 2:  begin                              {SYMBOL}
+      syn_trav_tag_string (syn_p^, tagstr); {get the symbol name}
+      if calc_sym_err (tagstr) then goto error; {invalid symbol name ?}
+      calc_sym_get (tagstr, dat_p);    {loop up the symbol}
+      if dat_p = nil then begin        {no such symbol ?}
+        writeln ('Symbol "', tagstr.str:tagstr.len, '" does not exist.');
+        goto error;
+        end;
+      if dat_p^.symtype <> symtype_var_k then begin
+        writeln ('Symbol "', tagstr.str:tagstr.len, '" is not a variable.');
+        goto error;
+        end;
+      v := dat_p^.var_val;             {return the variable's value}
       end;
 
 3:  begin                              {nested expression}
@@ -137,11 +153,13 @@ begin
 
 otherwise
     syn_msg_tag_err (syn_p^, '', '', nil, 0);
+error:                                 {error enountered, message already written}
     writeln;
     err := true;
     end;
 
-  discard( syn_trav_up (syn_p^) );     {back up from ONELINE syntax}
+leave:                                 {common exit point when in VALUE syntax}
+  discard( syn_trav_up (syn_p^) );     {back up from VALUE syntax}
   end;
 {
 ********************************************************************************
