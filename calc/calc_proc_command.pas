@@ -3,6 +3,7 @@
 module calc_proc_command;
 define calc_proc_command;
 %include 'calc.ins.pas';
+%include 'math.ins.pas';
 {
 ********************************************************************************
 *
@@ -41,38 +42,107 @@ begin
 
 2: begin                               {sqrt}
   fp := calc_val_fp (currval);         {get current value in floating point}
-  if fp >= 0.0
-    then begin                         {valid to take square root of}
-      calc_val_set_fp (sqrt(fp), currval);
+  if fp < 0.0 then begin               {invalid value ?}
+    writeln ('Error: SQRT of negative value');
+    goto error;
+    end;
+  calc_val_set_fp (sqrt(fp), currval);
+  end;
+
+3: begin                               {ln}
+  fp := calc_val_fp (currval);         {get current value in floating point}
+  if fp < 0.0 then begin               {invalid value ?}
+    writeln ('Error: LOG of negative value');
+    goto error;
+    end;
+  calc_val_set_fp (ln(fp), currval);
+  end;
+
+4: begin                               {log}
+  fp := calc_val_fp (currval);         {get current value in floating point}
+  if fp < 0.0 then begin               {invalid value ?}
+    writeln ('Error: LOG of negative value');
+    goto error;
+    end;
+  calc_val_set_fp (math_log10(fp), currval);
+  end;
+
+5: begin                               {log2}
+  fp := calc_val_fp (currval);         {get current value in floating point}
+  if fp < 0.0 then begin               {invalid value ?}
+    writeln ('Error: LOG of negative value');
+    goto error;
+    end;
+  calc_val_set_fp (math_log2(fp), currval);
+  end;
+
+6: begin                               {+}
+  calc_proc_value (v);                 {get the value after the operator}
+  if
+      (currval.valtype = valtype_int_k) and
+      (v.valtype = valtype_int_k)
+    then begin                         {both values are integer}
+      calc_val_set_int (currval.int + v.int, currval);
       end
-    else begin                         {can't take square root}
-      writeln ('Error: SQRT of negative value');
+    else begin                         {at least one value is floating point}
+      calc_val_set_fp (                {set current value to floating point}
+        calc_val_fp(currval) + calc_val_fp(v), {value to set to}
+        currval);                      {value descriptor to set}
       end
     ;
   end;
 
-3: begin                               {ln}
-  end;
-
-4: begin                               {log}
-  end;
-
-5: begin                               {log2}
-  end;
-
-6: begin                               {+}
-  end;
-
 7: begin                               {-}
+  calc_proc_value (v);                 {get the value after the operator}
+  if
+      (currval.valtype = valtype_int_k) and
+      (v.valtype = valtype_int_k)
+    then begin                         {both values are integer}
+      calc_val_set_int (currval.int - v.int, currval);
+      end
+    else begin                         {at least one value is floating point}
+      calc_val_set_fp (                {set current value to floating point}
+        calc_val_fp(currval) - calc_val_fp(v), {value to set to}
+        currval);                      {value descriptor to set}
+      end
+    ;
   end;
 
 8: begin                               {*}
+  calc_proc_value (v);                 {get the value after the operator}
+  if
+      (currval.valtype = valtype_int_k) and
+      (v.valtype = valtype_int_k)
+    then begin                         {both values are integer}
+      calc_val_set_int (currval.int * v.int, currval);
+      end
+    else begin                         {at least one value is floating point}
+      calc_val_set_fp (                {set current value to floating point}
+        calc_val_fp(currval) * calc_val_fp(v), {value to set to}
+        currval);                      {value descriptor to set}
+      end
+    ;
   end;
 
 9: begin                               {/}
+  calc_proc_value (v);                 {get the value after the operator}
+  calc_val_set_fp (                    {set current value to floating point}
+    calc_val_fp(currval) / calc_val_fp(v), {value to set to}
+    currval);                          {value descriptor to set}
   end;
 
 10: begin                              {^}
+  calc_proc_value (v);                 {get the value after the operator}
+  fp := calc_val_fp (currval);         {get current value in floating point}
+  if v.valtype <> valtype_int_k then begin {not raising to integer power}
+    if fp < 0.0 then begin
+      writeln ('Error: Negative value to non-integer power');
+      goto error;
+      end;
+    end;
+  calc_val_set_fp (                    {set current value to floating point}
+    calc_val_fp(currval) ** calc_val_fp(v), {value to set to}
+    currval);                          {value descriptor to set}
   end;
 
 11: begin                              {set}
