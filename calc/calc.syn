@@ -73,8 +73,8 @@
   pad
   ("sqrt"[2] notlett) .or
   ("ln"[3] notlett) .or
-  ("log"[4] notlett) .or
   ("log2"[5] notlett) .or
+  ("log"[4] notlett) .or
   ("*" pad value[8]) .or
   ("/" pad value[9]) .or
   ("^" pad value[10]) .or
