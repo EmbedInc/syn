@@ -5,7 +5,7 @@
 .symbol pad                            /* separator allowed but not required
 .symbol space                          /* one separator required, more allowed
 .symbol symbol                         /* name of a symbol, like a variable
-.symbol notlett                        /* not followed by letter
+.symbol notsym                         /* not a symbol name character
 .symbol number                         /* numeric literal
 .symbol value                          /* numeric value
 .symbol command                        /* one command
@@ -27,8 +27,11 @@
     .range["0" thru "9"]
     )
 
-.define notlett .as                    /* not a letter here, nothing consumed
-  .charcase[upper] .upto (.not .range["A" thru "Z"])
+.define notsym .as                     /* not a symbol name char, nothing consumed
+  .charcase[upper] .upto .not (
+    (.range["A" thru "Z"]) .or
+    (.range["0" thru "9"])
+    )
 
 .define number .as                     /* literal numeric value
   ("+"[1] .or "-"[2] .or .null[1])     /* optional leading sign
@@ -63,23 +66,23 @@
   number[1] .or
   symbol[2] .or
   ("(" pad expression[3] pad ")") .or
-  ("pi"[4] notlett) .or
-  ("e"[5] notlett)
+  ("pi"[4] notsym) .or
+  ("e"[5] notsym)
 
 .define command .as                    /* one command
   (space value[1]) .or
   ("+" pad value[6]) .or
   ("-" pad value[7]) .or
   pad
-  ("sqrt"[2] notlett) .or
-  ("ln"[3] notlett) .or
-  ("log2"[5] notlett) .or
-  ("log"[4] notlett) .or
+  ("sqrt"[2] notsym) .or
+  ("ln"[3] notsym) .or
+  ("log2"[5] notsym) .or
+  ("log"[4] notsym) .or
   ("*" pad value[8]) .or
   ("/" pad value[9]) .or
   ("^" pad value[10]) .or
-  ("set" space symbol[11] notlett) .or
-  ("q"[12] notlett) .or
+  ("set" space symbol[11] notsym) .or
+  ("q"[12] notsym) .or
   (value[1]) .or
   ("+" pad value[6]) .or
   ("-" pad value[7])
