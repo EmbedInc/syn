@@ -156,8 +156,13 @@ begin
   dat_p^.var_val := currval;           {assign the current value to the variable}
   end;
 
-12: begin
+12: begin                              {quit}
   quit := true;
+  end;
+
+13: begin                              {\}
+  fp := calc_val_fp (currval);         {get current value in floating point}
+  calc_val_set_fp (1.0 / fp, currval); {set current value to the reciprocal}
   end;
 
 otherwise

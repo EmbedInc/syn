@@ -125,6 +125,10 @@ The commands are:
 
     Log base 2.
 
+  \
+
+    Reciprocal.
+
   set <variable>
 
     Writes the current value into the indicated variable.  The variable is

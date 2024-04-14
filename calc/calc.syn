@@ -82,6 +82,7 @@
   ("/" pad value[9]) .or
   ("^" pad value[10]) .or
   ("set" space symbol[11] notsym) .or
+  ("\"[13]) .or
   ("q"[12] notsym) .or
   (value[1]) .or
   ("+" pad value[6]) .or
