@@ -1,0 +1,175 @@
+                            Embed program CALC
+                              14 April 2024
+
+calc [options]
+
+The CALC program is intended as an example of using the Embed syntaxer. To
+do that, it implements basic calculator functions in its own language. See
+doc/syn.htm in the Embed SYN source code repository for detailed
+information on the syntaxer.
+
+The command line options are:
+
+  -TRACE
+
+    Enables syntax tracing after each command line.  The current syntax
+    tree position is shown at certain points while traversing the tree.
+    This can provide insight into how input lines are broken into syntax
+    contructions and handled at run time.
+
+The program maintains a current value, initialized to 0.  The user enters
+commands that may alter this value.  The current value is shown
+immediately before prompting the user to enter each new line of commands.
+The program prompts the user with ": " to enter commands.
+
+Each line can contain multiple commands.  These are processed in the order
+they appear on the line.
+
+The commands are:
+
+  <value>
+
+    A value on its own (not a parameter to another command) sets the
+    current value.  In effect, this overwrites the result of all previous
+    operations.
+
+    A value can be one of the following:
+
+      <number>
+
+        A number is a literal numeric value.  It may be proceeded by a "+"
+        or "-" minus sign.  The default is "+" when not explicitly
+        provided.  The remaining number can be in binary, hexadecimal, or
+        decimal.
+
+        Binary: The first character must be "b". The remaining characters
+        must be 0 or 1, representing an integer in binary.
+
+        Hexadecimal: The first character must be "h". The remaining
+        characters must be 0-9 or A-F representing an integer in
+        hexadecimal.  The A-F digits are case-insensitive.
+
+        Decimal is the default when no special character indicates
+        otherwise.  Decimal numbers may be either integer or floating
+        point.  Integer numbers only contains the digits 0-9.
+
+        Floating point numbers contain the decimal point with at least one
+        digit immediately before or after the point.  This may be followed
+        by an exponent of 10.  An exponent is specified by "e", followed
+        by an optional "+" or "-" sign, followed by at least one digit
+        0-9.  The whole number is interepret as you would expect if you've
+        used a computer some time since the 1960s.
+
+        Examples:
+
+          b1101     -  Binary, integer value 13 in decimal.
+          hFF       -  Hexadecimal, integer value 255 in decimal.
+          -13       -  Integer value of negative thirteen.
+          1.23e2    -  1.23 times 10 to the power of 2, = 123.0.
+
+      <variable>
+
+        The name of a variable.  Variable names start with an upper case
+        letter A-Z, and can have additional characters A-Z, a-z, and 0-9.
+        The variable must exist (have been previously defined).  See the
+        "set" command, below.  The value is whatever value the variable
+        was last set to.
+
+      pi
+
+        The value of Pi, 3.141592...
+
+      e
+
+        The value of "e", 2.71828...
+
+      (<expression>)
+
+        An expression in parenthesis.  An expression is a sequence of
+        commands.  The starting value is the current value before
+        (outside) the expression.  The value of the expression is the
+        current value after the last command of the expression is
+        executed.  The current value outside the expression is not altered
+        by the expression.
+
+  + <value>
+  - <value>
+  * <value>
+  / <value>
+  ^ <value>
+
+    Each of these commands performs the indicated operation with the
+    current value.  The current value is updated with the result.  The
+    first four operators are obvious.  "^" computes the current value to
+    the power of <value>.
+
+    Examples:
+
+      pi + 1  -->  4.14159
+      3 - 1   -->  2
+      2 ^ 8   -->  256
+
+  sqrt
+
+    Square root.
+
+  ln
+
+    Natural log.
+
+  log
+
+    Log base 10.
+
+  log2
+
+    Log base 2.
+
+  set <variable>
+
+    Writes the current value into the indicated variable.  The variable is
+    created if it does not previously exist.  The current value is not
+    altered.
+
+    Variable names start with an upper case letter A-Z, which may then be
+    followed by more characters A-Z, a-z, and 0-9.
+
+  q
+
+    Quit the program.
+
+Note that command names start with a lower case letter.  This
+distinguishes them from variable names, which start with an upper case
+letter.  Therefore "log" is a command, whereas "Log" is the name of a
+variable.
+
+Use of spaces
+
+  Spaces between commands are not required except when necessary to
+  indicate the start or end of a command.
+
+  For example, "log2" is a single command, whereas "log 2" is two
+  commands.  The first takes the natural logarithm of the current value,
+  and the second sets the current value to 2.
+
+  A particular situation to be aware of is the interpretation of "+" and
+  "-". These are both valid commands (perform addition and subtraction,
+  respectively) and valid leading characters to literal values.  In
+  general, "+" and "-" are taken as commands unless they unambiguously
+  specify the sign of a numeric value.
+
+  For example, consider the following four command sequences:
+
+    pi+1
+    pi+ 1
+    pi + 1
+    pi +1
+
+  In the first three, "+" is interpreted as the addition command.  The
+  value of each of the first three lines is Pi + 1, 4.14159...
+
+  In the last command sequence, "+" is interpreted as the sign for the
+  value 1.  "+1" is therefore a command on its own, and overwites the
+  current value.  The value of the last line is 1.  Note that the "pi"
+  command becomes irrelevant in this case since the current value is
+  overwritten with an explicit constant after "pi" is executed.
