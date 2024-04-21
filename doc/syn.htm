@@ -6,7 +6,7 @@
 <body>
 
 <h1 class=page>Embed Syntaxer User's Guide</h1>
-<p class=page>Last updated 25 Feb 2024</p>
+<p class=page>Last updated 21 Apr 2024</p>
 
 <ul>
   <li><a href="#intro">Introduction</a><ul>
@@ -38,7 +38,7 @@
     </ul>
   <li><a href="#cust_constr">Manually creating syntax parsing routine</a><ul>
     </ul>
-  <li><a href="#syncalc">SYNCALC Example Application</a><ul>
+  <li><a href="#calc">CALC Example Application</a><ul>
     </ul>
   </ul>
 
@@ -1819,7 +1819,27 @@ procedure syn_p_cpos_pop (             {pop input character position from parse 
 
 
 <!-- -------------------------------------------------------------------------->
-<h1 id="syncalc">SYNCALC Example Application</h1>
+<h1 id="calc">CALC Example Application</h1>
+
+<p>The subdirectory <tt>calc</tt> within the <tt>syn</tt> source code
+repository contains an example program that uses the syntaxer.  This
+program implements basic calculator functions entered from an interactive
+command line.  While the calculator functions do work, this program's main
+purpose is to serve as an example of using the syntaxer, to to be a useful
+calculator.
+
+<p>The <a href="../calc/calc.txt"><tt>calc.txt</tt></a> file describes how
+the <tt>calc</tt> program functions.
+
+<p>The <a href="../calc/calc.syn"><tt>calc.syn</tt></a> file is the syntax
+definition of the calculator language.  This is what the <tt>calc</tt>
+program parses and processes at run time.
+
+<p>The <a href="../calc/test_calc.pas"><tt>test_calc</tt></a> program is
+an example of <tt>test_syn</tt> modified to a custom syntax, the CALC
+syntax in this case.  By default, <tt>test_calc</tt> reads
+<tt>t.calc</tt>, parses it according to the CALC syntax, and then shows
+the resulting syntax trees.
 
 
 </body></html>
