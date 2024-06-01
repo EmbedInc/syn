@@ -11,7 +11,7 @@ call src_insall %srcdir% %libname%
 
 call src_get %srcdir% %libname%_%libname%.ins.pas
 copya %libname%_%libname%.ins.pas (cog)lib/%libname%_%libname%.ins.pas
-
+copya syn.ins.pas (cog)lib/syn.ins.pas
 call src_syn %srcdir% syn
 
 call src_pas %srcdir% %libname%_dbg

@@ -7,9 +7,9 @@
 *   library.  It also needs access to some fields of the SYN_T structure that
 *   is its SYN library use state.
 }
-%include '(cog)lib/sys.ins.pas';
-%include '(cog)lib/util.ins.pas';
-%include '(cog)lib/string.ins.pas';
-%include '(cog)lib/file.ins.pas';
-%include '(cog)lib/fline.ins.pas';
-%include '(cog)lib/syn.ins.pas';
+%include 'sys.ins.pas';
+%include 'util.ins.pas';
+%include 'string.ins.pas';
+%include 'file.ins.pas';
+%include 'fline.ins.pas';
+%include 'syn.ins.pas';
