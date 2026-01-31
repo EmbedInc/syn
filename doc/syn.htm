@@ -6,7 +6,7 @@
 <body>
 
 <h1 class=page>Embed Syntaxer User's Guide</h1>
-<p class=page>Last updated 5 Nov 2024</p>
+<p class=page>Last updated 31 January 2026</p>
 
 <ul>
   <li><a href="#intro">Introduction</a><ul>
@@ -649,7 +649,7 @@ while reading this section.
     successive "word" in the names provides more detail, until eventually
     the name becomes unique.  For example, the library managenment routine
     names start with "syn_lib_", and the routines for traversing a syntax
-    tree "syn_trav_".
+    tree with "syn_trav_".
 
     <p>Routines are usually grouped into source files by this same naming
     hierarchy.  The "syn_lib_" routines are in the "syn_lib.pas" file, and
@@ -852,8 +852,8 @@ function syn_parse_coll (              {parse from start of collection of lines}
 
     <p>When there is a syntax error, there is no valid path thru the
     syntax definition, so eventually state is restored to the starting
-    point.  When there are no more syntax choices to test, then the parse
-    is aborted and <tt>syn_parse_next</tt> returns FALSE.
+    point.  When there are no more syntax choices to test, the parse is
+    aborted and <tt>syn_parse_next</tt> returns FALSE.
 
     <p>Some of the syntax branches might be more "right" than others, but
     the parser can not determine that since they are all ultimately wrong.
@@ -1025,31 +1025,31 @@ procedure syn_trav_init (              {init traversion, at start, stack empty}
     a syntax tree entry, while maintaining strong type checking.  The
     possible values are:</p><indent><dl>
 
-      <dt><tt>syn_tent_lev_k</tt><dd>
+      <p><dt><tt>syn_tent_lev_k</tt><dd>
 
         <p>First entry of a syntax tree level.  All syntax tree levels
         start with this entry.
 
-      <dt><tt>syn_tent_end_k</tt><dd>
+      <p><dt><tt>syn_tent_end_k</tt><dd>
 
         <p>Last entry of a syntax tree level.  There is no "next" entry
         here. Attempts to get subsequent entries at this level result in
         staying at this END entry.
 
-      <dt><tt>syn_tent_sub_k</tt><dd>
+      <p><dt><tt>syn_tent_sub_k</tt><dd>
 
         <p>A subordinate level exists below this entry.
 
-      <dt><tt>syn_tent_tag_k</tt><dd>
+      <p><dt><tt>syn_tent_tag_k</tt><dd>
 
         <p>Result of a tag in the syntax definition.
 
-      <dt><tt>syn_tent_err_k</tt><dd>
+      <p><dt><tt>syn_tent_err_k</tt><dd>
 
         <p>The farthest point reached in the input stream during an error
         re-parse.  There is no "next" entry.
 
-      </dl></p></indent>
+      </p></dl></p></indent>
 
     <p>The integer value is the only way to get the ID of a tag in the
     syntax definition.  Tag IDs are always integers of 1 or greater.
@@ -1106,7 +1106,7 @@ function syn_trav_next_down (          {into sub level of next entry}
   val_param; extern;
 </pre></p></indent>
 
-    <p>The first goes down from the current entry.  The second first
+    <p>The first goes down from the current entry.  The second option
     advances to the next entry in the current level, then attempts to go
     down into a subordinate level from there.  In either case, the
     function returns TRUE if the tree position is now one level lower than
@@ -1317,8 +1317,7 @@ encounter.
 
 <p>The source code for the TEST_SYN program is in the "test_syn.pas" file.
 This source is useful as an example of how to read an input file into
-memory so that the syntaxer can access it, parsing the syntax, and walking
-the resulting syntax trees.
+memory, parse the input, and walk the resulting syntax trees.
 
 <p>Very little of TEST_SYN is actually specific to processing the SYN
 syntax, as opposed to any other syntax defined with the SYN language.  In
@@ -1370,7 +1369,7 @@ var
   <p>The variable <tt>top_syn_p</tt> must point to the parsing routine for
   the top level syntax construction.  This is done in the last two lines
   above by declaring the variable of type <tt>syn_parsefunc_p_t</tt> and
-  setting it to the initial value of the parsing routine address.  The
+  setting its initial value to the address of the parsing routine.  The
   value of this variable is not changed in the program, so this is just a
   way of specifying its fixed value.
 
@@ -1391,8 +1390,7 @@ var
 
   <p>A template declaration of a custom parsing routine is provided in the
   TEST_SYN source, but commented out.  That is because all the SYN
-  language parsing functions <i>are</i> declared in the SYN library
-  include file.
+  language parsing functions are declared in the SYN library include file.
 
   <p>Therefore, to complete the customization of the TEST_SYN source to
   the SYN_CH_TOPLEV top level parsing routine, uncomment the template
@@ -1503,7 +1501,8 @@ SYN.H).
   input stream matched the syntax or not.
 
   <p>A return value of TRUE means that the input matched the syntax, and
-  the result added to the syntax tree being built.
+  the result added to the syntax tree being built.  The parsing position
+  is updated to after the last-parsed character.
 
   <p>A return value of FALSE means that the input did not match the
   syntax, and the syntax tree was not altered.  The parsing state is also
@@ -1565,7 +1564,7 @@ function syn_p_ichar (                 {get next input char code, charcase appli
 </pre></p></indent>
 
     <p>This either returns the character code as an unsigned integer from
-    0 to 255, or one of the special characters defined by contants
+    0 to 255, or one of the special characters defined by constants
     SYN_ICHAR_xxx_K.  These special characters have values less than 0,
     and are defined in SYN.INS.PAS as:
 

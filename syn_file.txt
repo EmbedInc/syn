@@ -1,5 +1,5 @@
                   Syntaxer Definition File Specification
-                              17 April 2022
+                              31 January 2026
 
 The Embed syntaxer parses a collection of text lines according to a
 user-defined syntax.  A syntax tree is built from the input lines.  An
@@ -219,9 +219,9 @@ Tagged items
   The last point is what tagged items are.  Only syntax items that are
   specifically tagged will be available on the syntax tree.  Tagged items
   on the syntax tree refer to the section of the input stream that was
-  tagged, and also an ID specified in the syntax definition.  The IDs are
-  useful to the application for distinguishing between options that might
-  have occurred at that point in the input stream.
+  tagged, and the ID the item was tagged with.  The IDs are useful to the
+  application for distinguishing between options that might have occurred
+  at that point in the input stream.
 
   For example, consider a language where assignment statements can take
   either of two forms:
