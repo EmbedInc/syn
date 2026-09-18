@@ -5,7 +5,9 @@ define syn_trav_init;
 define syn_trav_type;
 define syn_trav_next;
 define syn_trav_down;
+define syn_trav_down_virt;
 define syn_trav_next_down;
+define syn_trav_next_down_virt;
 define syn_trav_up;
 define syn_trav_level;
 define syn_trav_level_name;
@@ -19,7 +21,6 @@ define syn_trav_goto;
 define syn_trav_push;
 define syn_trav_pop;
 define syn_trav_popdel;
-define syn_trav_tag_err;
 define syn_trav_pos_show;
 define syn_trav_error;
 define syn_trav_error_abort;
@@ -43,6 +44,7 @@ begin
   syn_stack_init (syn);                {clear/reset temp state stack}
   syn.travstk_p := nil;                {init temporary state stack pointer}
   syn.tent_p := syn.sytree_p;          {init position to start of syntax tree}
+  syn.lev_virt := 0;                   {not in virtual levels below curr entry}
   end;
 {
 ********************************************************************************
@@ -57,6 +59,11 @@ function syn_trav_type (               {get type of current syntax tree entry}
   val_param;
 
 begin
+  if syn.lev_virt > 0 then begin       {in virtual level ?}
+    syn_trav_type := syn_tent_end_k;   {virtual levels are always empty}
+    return;
+    end;
+
   case syn.tent_p^.ttype of
 syn_ttype_lev_k: syn_trav_type := syn_tent_lev_k;
 syn_ttype_sub_k: syn_trav_type := syn_tent_sub_k;
@@ -82,7 +89,10 @@ function syn_trav_next (               {to next syntax tree entry}
   val_param;
 
 begin
-  if syn.tent_p^.next_p = nil then begin {there is no next entry}
+  if
+      (syn.lev_virt > 0) or            {in a virtual level ?}
+      (syn.tent_p^.next_p = nil)       {there is no next entry ?}
+      then begin
     syn_trav_next := syn_tent_end_k;   {indicate end of this level}
     return;
     end;
@@ -105,13 +115,39 @@ function syn_trav_down (               {down into subordinate level from curr en
   val_param;
 
 begin
-  if syn.tent_p^.ttype <> syn_ttype_sub_k then begin {not at subordinate level ?}
+  if
+      (syn.lev_virt > 0) or            {already in a virtual level ?}
+      (syn.tent_p^.ttype <> syn_ttype_sub_k) {not at subordinate level ?}
+      then begin
     syn_trav_down := false;
     return;
     end;
 
   syn.tent_p := syn.tent_p^.sub_p;     {go to start of the subordinate level}
   syn_trav_down := true;               {indicate success}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_TRAV_DOWN_VIRT (SYN)
+*
+*   Go down into a subordinate level from the current syntax tree entry.  If the
+*   current entry is not a subordinate level, then a virtual level is entered.
+}
+procedure syn_trav_down_virt (         {down to subordinate, virtual level if none}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param;
+
+begin
+  if
+      (syn.lev_virt > 0) or            {already in a virtual level ?}
+      (syn.tent_p^.ttype <> syn_ttype_sub_k) {not at subordinate level ?}
+      then begin
+    syn.lev_virt := syn.lev_virt + 1;  {one more vitual level lower}
+    return;
+    end;
+
+  syn.tent_p := syn.tent_p^.sub_p;     {go to start of the subordinate level}
   end;
 {
 ********************************************************************************
@@ -130,12 +166,38 @@ function syn_trav_next_down (          {into sub level of next entry}
 
 begin
   syn_trav_next_down := false;         {init to next is not subordinate level}
+  if syn.lev_virt > 0 then return;     {already in a virtual level ?}
   if syn.tent_p^.next_p = nil then return; {there is no next entry ?}
   if syn.tent_p^.next_p^.ttype <> syn_ttype_sub_k {next level not sub ?}
     then return;
 
   syn.tent_p := syn.tent_p^.next_p^.sub_p; {to sub level of next entry}
   syn_trav_next_down := true;          {indicate success}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SYN_TRAV_NEXT_DOWN_VIRT (SYN)
+*
+*   If the next syntax tree entry is a subordinate level, go down to the start
+*   of that level.  If the next entry is not a subordinate level, then go down
+*   into a virtual level.
+}
+procedure syn_trav_next_down_virt (    {next and down, virtual level if none}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param;
+
+begin
+  if
+      (syn.lev_virt > 0) or            {already in a virtual level ?}
+      (syn.tent_p^.next_p = nil) or else {there is no next entry ?}
+      (syn.tent_p^.next_p^.ttype <> syn_ttype_sub_k) {next level not sub ?}
+      then begin
+    syn.lev_virt := syn.lev_virt + 1;  {one more virtual level down}
+    return;
+    end;
+
+  syn.tent_p := syn.tent_p^.next_p^.sub_p; {to sub level of next entry}
   end;
 {
 ********************************************************************************
@@ -153,6 +215,11 @@ function syn_trav_up (                 {pop up to parent syntax tree level}
   val_param;
 
 begin
+  if syn.lev_virt > 0 then begin       {in a virtual level ?}
+    syn.lev_virt := syn.lev_virt - 1;  {one less virtual level deep}
+    syn_trav_up := true;               {success}
+    end;
+
   if syn.tent_p^.levst_p^.lev_up_p = nil then begin {no parent level ?}
     syn_trav_up := false;
     return;
@@ -175,7 +242,7 @@ function syn_trav_level (              {get nesting level of curr syntax tree po
   val_param;
 
 begin
-  syn_trav_level := syn.tent_p^.levst_p^.level;
+  syn_trav_level := syn.tent_p^.levst_p^.level + syn.lev_virt;
   end;
 {
 ********************************************************************************
@@ -194,6 +261,7 @@ var
 
 begin
   name.len := 0;                       {init the returned string to empty}
+  if syn.lev_virt > 0 then return;     {in virtual level, which don't have names ?}
   lev_p := syn.tent_p^.levst_p;        {get pointer to start of level entry}
   if lev_p = nil then return;          {no start of level available (shouldn't happen) ?}
   if lev_p^.lev_name_p = nil then return; {name of this level unavailable ?}
@@ -215,6 +283,11 @@ function syn_trav_tag (                {get ID of current tag entry}
   val_param;
 
 begin
+  if syn.lev_virt > 0 then begin       {in a virtual level ?}
+    syn_trav_tag := syn_tag_end_k;     {virtual levels are always empty}
+    return;
+    end;
+
   case syn.tent_p^.ttype of            {what kind of entry is here ?}
 syn_ttype_lev_k: syn_trav_tag := syn_tag_lev_k;
 syn_ttype_sub_k: syn_trav_tag := syn_tag_sub_k;
@@ -277,7 +350,10 @@ procedure syn_trav_tag_start (         {get start loc for tag at curr tree entry
   val_param;
 
 begin
-  if syn.tent_p^.ttype <> syn_ttype_tag_k then begin {not at a tag ?}
+  if
+      (syn.lev_virt > 0) or            {in a virtual level ?}
+      (syn.tent_p^.ttype <> syn_ttype_tag_k) {not at a tag ?}
+      then begin
     pos.line_p := nil;                 {return invalid position}
     pos.ind := 0;
     return;
@@ -304,6 +380,7 @@ var
 
 begin
   tagstr.len := 0;                     {init the returned string to empty}
+  if syn.lev_virt > 0 then return;     {in a virtual level ?}
   if syn.tent_p^.ttype <> syn_ttype_tag_k {not at a tag ?}
     then return;
 
@@ -330,7 +407,8 @@ procedure syn_trav_save (              {save current syntax tree position}
   val_param;
 
 begin
-  pos := syn.tent_p;
+  pos.tent_p := syn.tent_p;            {save current tree traversing position}
+  pos.lev_virt := syn.lev_virt;
   end;
 {
 ********************************************************************************
@@ -346,7 +424,8 @@ procedure syn_trav_goto (              {go to previously-saved syn tree position
   val_param;
 
 begin
-  syn.tent_p := pos;
+  syn.tent_p := pos.tent_p;            {set curr tree postion from POS}
+  syn.lev_virt := pos.lev_virt;
   end;
 {
 ********************************************************************************
@@ -365,7 +444,7 @@ var
 begin
   syn_stack_push (syn, sizeof(fr_p^), fr_p); {create the new stack frame}
   fr_p^.prev_p := syn.travstk_p;       {point back to previous stack frame}
-  fr_p^.tent_p := syn.tent_p;          {save current position}
+  syn_trav_save (syn, fr_p^.pos);      {save current position in stack frame}
   syn.travstk_p := fr_p;               {update pointer to top of stack frame}
   end;
 {
@@ -383,7 +462,7 @@ procedure syn_trav_pop (               {restore curr syntx tree pos from stack}
 begin
   if syn.travstk_p = nil then return;  {no stack frame to pop ?}
 
-  syn.tent_p := syn.travstk_p^.tent_p; {go to position saved on stack}
+  syn_trav_goto (syn, syn.travstk_p^.pos); {go to position saved on stack}
   syn.travstk_p := syn.travstk_p^.prev_p; {point back to previous stack frame}
   syn_stack_pop (syn, sizeof(syn.travstk_p^)); {pop the stack}
   end;
@@ -405,73 +484,6 @@ begin
 
   syn.travstk_p := syn.travstk_p^.prev_p; {point back to previous stack frame}
   syn_stack_pop (syn, sizeof(syn.travstk_p^)); {pop the stack}
-  end;
-{
-********************************************************************************
-*
-*   Subroutine SYN_TRAV_TAG_ERR (SYN, SUBSYS, MSG, PARMS, N_PARMS)
-*
-*   Write error message about unexpected tag at the current syntax tree entry.
-*   The error message indicated by SUSBYS, MSG, PARMS, and N_PARMS is written
-*   first.
-}
-procedure syn_trav_tag_err (           {unexpected tag from curr entry, write err message}
-  in out  syn: syn_t;                  {SYN library use state}
-  in      subsys: string;              {name of subsystem, used to find message file}
-  in      msg: string;                 {message name withing subsystem file}
-  in      parms: univ sys_parm_msg_ar_t; {array of parameter descriptors}
-  in      n_parms: sys_int_machine_t); {number of parameters in PARMS}
-  val_param;
-
-const
-  max_msg_args = 2;                    {max arguments we can pass to a message}
-
-var
-  name: string_var32_t;                {name of current syntax construction}
-  name2: string_var32_t;               {name of other syntax construction}
-  msg_parm:                            {references arguments passed to a message}
-    array[1..max_msg_args] of sys_parm_msg_t;
-
-begin
-  name.max := size_char(name.str);     {init local var strings}
-  name2.max := size_char(name2.str);
-  name2.len := 0;
-
-  sys_message_parms (subsys, msg, parms, n_parms); {write caller's error message}
-
-  syn_trav_level_name (syn, name);     {get name of this syntax construction}
-
-  case syn.tent_p^.ttype of            {what type of syntax tree entry is here ?}
-syn_ttype_lev_k: begin
-      sys_msg_parm_vstr (msg_parm[1], name);
-      sys_message_parms ('syn', 'tag_lev_start', msg_parm, 1);
-      end;
-syn_ttype_sub_k: begin
-      sys_msg_parm_vstr (msg_parm[1], name);
-      if syn.tent_p^.sub_p^.lev_name_p <> nil then begin
-        string_copy (syn.tent_p^.sub_p^.lev_name_p^, name2);
-        end;
-      sys_msg_parm_vstr (msg_parm[2], name2);
-      sys_message_parms ('syn', 'tag_sub', msg_parm, 2);
-      end;
-syn_ttype_tag_k: begin
-      sys_msg_parm_vstr (msg_parm[1], name);
-      sys_msg_parm_int (msg_parm[2], syn.tent_p^.tag);
-      sys_message_parms ('syn', 'tag_unexpected', msg_parm, 2);
-      end;
-syn_ttype_end_k: begin
-      sys_msg_parm_vstr (msg_parm[1], name);
-      sys_message_parms ('syn', 'tag_lev_end', msg_parm, 1);
-      end;
-syn_ttype_err_k: begin
-      sys_message_parms ('syn', 'tag_err', nil, 0);
-      end;
-otherwise
-    writeln ('INTERNAL ERROR: Urecognized syntax tree entry type of ',
-      ord(syn.tent_p^.ttype), ' encountered in SYN_TRAV_TAG_ERR.');
-    sys_bomb;
-    end;
-  fline_cpos_show (syn.tent_p^.pos);   {show the input stream position}
   end;
 {
 ********************************************************************************

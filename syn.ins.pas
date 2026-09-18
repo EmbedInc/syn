@@ -107,10 +107,15 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     tagged: boolean;                   {tag created since level start or last save}
     end;
 
+  syn_treepos_t = record               {saved syntax tree traversal position}
+    tent_p: syn_tent_p_t;              {to syntax tree position}
+    lev_virt: sys_int_machine_t;       {N virt levels below tree position}
+    end;
+
   syn_ftrav_p_t = ^syn_ftrav_t;
   syn_ftrav_t = record                 {temp state stack frame during tree traversal}
     prev_p: syn_ftrav_p_t;             {points to previous stack frame}
-    tent_p: syn_tent_p_t;              {points to current syntax tree frame}
+    pos: syn_treepos_t;                {save syntax tree traversing position}
     end;
 
   syn_p_t = ^syn_t;
@@ -138,6 +143,7 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     *   State used when traversing the syntax tree.
     }
     tent_p: syn_tent_p_t;              {pointer to current syntax tree entry}
+    lev_virt: sys_int_machine_t;       {N virt levels below curr tree entry}
     travstk_p: syn_ftrav_p_t;          {pointer to current traversing stack entry}
     end;
 
@@ -145,8 +151,6 @@ syn_ttype_err_k: (                     {error end of syntax tree}
     in out syn: syn_t)                 {SYN library use state}
     :boolean;                          {syntax matched, tree possibly extended}
     val_param;
-
-  syn_treepos_t = syn_tent_p_t;        {user-stored syntax tree position}
 {
 ********************************************************************************
 *
@@ -210,6 +214,10 @@ function syn_trav_down (               {down into subordinate level from curr en
   :boolean;                            {successfully entered subordinate level}
   val_param; extern;
 
+procedure syn_trav_down_virt (         {down to subordinate, virtual level if none}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
 procedure syn_trav_goto (              {go to previously-saved syn tree position}
   in out  syn: syn_t;                  {SYN library use state}
   in      pos: syn_treepos_t);         {saved position to go to}
@@ -237,6 +245,10 @@ function syn_trav_next (               {to next syntax tree entry}
 function syn_trav_next_down (          {into sub level of next entry}
   in out  syn: syn_t)                  {SYN library use state}
   :boolean;                            {next was sub level, moved down}
+  val_param; extern;
+
+procedure syn_trav_next_down_virt (    {next and down, virtual level if none}
+  in out  syn: syn_t);                 {SYN library use state}
   val_param; extern;
 
 function syn_trav_next_tag (           {to next entry, return its tag value}
