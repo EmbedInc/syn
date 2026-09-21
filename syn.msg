@@ -108,8 +108,7 @@ msg no_tree_entry
 
 msg tag_err
   lan english -def
-    Syntax error.  The first character that did not match the syntax
-    template is at:
+    Syntax error at
 msg tag_lev_end
   lan english -def
     The end of syntax construction "%p1s" was found when a tag was
