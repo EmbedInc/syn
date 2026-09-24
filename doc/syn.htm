@@ -6,7 +6,7 @@
 <body>
 
 <h1 class=page>Embed Syntaxer User's Guide</h1>
-<p class=page>Last updated 31 January 2026</p>
+<p class=page>Last updated 24 September 2026</p>
 
 <ul>
   <li><a href="#intro">Introduction</a><ul>
@@ -608,9 +608,10 @@ language.
 
 <p>This section describes how to use the SYN library from the
 application's point of view.  The application-visible interface to the SYN
-library is defined in the syn.ins.pas include file (and syn.h, which is
-derived from syn.ins.pas).  It may be helpful to refer to the include file
-while reading this section.
+library is defined in the <a href="../syn.ins.pas">syn.ins.pas</a> include
+file (and <a href="../../../lib/syn.h">syn.h</a>, which is derived from
+syn.ins.pas).  It may be helpful to refer to the include file while
+reading this section.
 
 
 <h2 id="synlib_doc">Documentation</h2><indent>
@@ -628,7 +629,7 @@ while reading this section.
 
     </p></indent>
 
-  <h3>SYN.INS.PAS comments</h3><indent>
+  <h3><a href="../syn.ins.pas">SYN.INS.PAS</a> comments</h3><indent>
 
     <p>The comments in the Pascal include file (syn.ins.pas) provide quick
     reminders about the various routines, arguments, and data structures.
@@ -1019,11 +1020,9 @@ procedure syn_trav_init (              {init traversion, at start, stack empty}
 
     <p>There are two types of values used to indicate what an entry is.
     These are a <tt>syn_tent_k_t</tt> enumerated value, and an ordinary
-    integer.
-
-    <p>The enumerated value is useful for determining the overall type of
-    a syntax tree entry, while maintaining strong type checking.  The
-    possible values are:</p><indent><dl>
+    integer.  The enumerated value is useful for determining the overall
+    type of a syntax tree entry while maintaining strong type checking.
+    The possible values are:</p><indent><dl>
 
       <p><dt><tt>syn_tent_lev_k</tt><dd>
 
@@ -1092,7 +1091,7 @@ function syn_trav_next_tag (           {to next entry, return its tag value}
     and the second its integer ID value.
 
     <p>Two functions can be used to go down into a subordinate syntax tree
-    level:
+    level from the current entry if the subordinate level exists:
 
 </p><indent><p><pre>
 function syn_trav_down (               {down into subordinate level from curr entry}
@@ -1106,12 +1105,12 @@ function syn_trav_next_down (          {into sub level of next entry}
   val_param; extern;
 </pre></p></indent>
 
-    <p>The first goes down from the current entry.  The second option
-    advances to the next entry in the current level, then attempts to go
-    down into a subordinate level from there.  In either case, the
-    function returns TRUE if the tree position is now one level lower than
-    when the call was made.  FALSE indicates that the entry attempting to
-    go down from was not a subordinate level entry.
+    <p>The first goes down from the current entry.  The second advances to
+    the next entry in the current level, then attempts to go down into a
+    subordinate level from there.  In either case, the function returns
+    TRUE if the tree position is now one level lower than when the call
+    was made.  FALSE indicates that the entry attempting to go down from
+    was not a subordinate level entry (not type <tt>syn_tent_sub_k</tt>).
 
     <p>To go back up from a subordinate level to the parent level, use:
 
@@ -1124,6 +1123,88 @@ function syn_trav_up (                 {pop up to parent syntax tree level}
 
     <p>When successful (there was a parent level), the current entry is
     the one immediately after the subordinate level entry in the parent.
+
+    <h4>Virtual levels</h4><indent>
+
+      <p>Sub-trees are only created on the syntax tree when there is at
+      least one tag in the sub-tree.  It is possible to create syntax
+      constructions that only sometimes cause tagged items to be saved on
+      the syntax tree, depeding on the syntax path taken.  For example,
+      consider the following syntax constructions:
+
+</p><indent><p><pre>
+.define object .as
+  ("box" dimensions[1]) .or
+  ("cabinet" dimenions[2]) .or
+  ("drawer" dimensions[3])
+
+.define dimensions .as
+  .occurs[0 to inf] (
+    space
+    ("width" space number[10]) .or
+    ("height" space number[11]) .or
+    ("depth" space number[12]) .or
+    )
+</pre></p></indent>
+
+      <p>When the application traverses the syntax tree for
+      <tt>object</tt>, it will always (assuming no syntax error) find one
+      tag.  That tag will be 1, 2, or 3 identifying the type of object,
+      but also tagging the location on the syntax tree of optional
+      dimensions for that object.
+
+      <p>The subordinate <tt>dimensions</tt> level might or might not
+      exist, depending on whether any of the <tt>width</tt>,
+      <tt>height</tt>, or <tt>depth</tt> options were specified.  After
+      getting the 1-3 tag value, the application would call
+      <tt>syn_trav_next_down</tt> to attempt to go down into the
+      <tt>dimensions</tt> syntax.  The function returning FALSE indicates
+      that no options were specified and the syntax tree position is still
+      immediately after the 1-3 tag.  TRUE indicates at least one option
+      was specified and that the syntax tree position is now at the start
+      of the subordinate <tt>dimensions</tt> construction.
+
+      <p>The above scheme will work, but using virtual levels can simplify
+      the tree traversing logic.  The following functions always go down
+      one level, whether that level exists or not:
+
+</p><indent><p><pre>
+procedure syn_trav_down_virt (         {down to subordinate, virtual level if none}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+
+procedure syn_trav_next_down_virt (    {next and down, virtual level if none}
+  in out  syn: syn_t);                 {SYN library use state}
+  val_param; extern;
+</pre></p></indent>
+
+      <p>When no subordinate level exists, the syntax tree postion is in a
+      "virtual level".  These always appear as empty, with
+      <tt>syn_tent_end_k</tt> the only tag type.  The function
+      <tt>syn_trav_up</tt> pops up one level, the same as from a real
+      level.  Virtual levels may be nested arbitrarily deeply.
+
+      <p>To process the <tt>object</tt> syntax using virtual levels, the
+      applications gets the 1-3 tag value and calls
+      <tt>syn_trav_next_down_virt</tt>. It now gets the optional 10-12
+      tags until hitting the end of the syntax level, then pops back to
+      the parent level. This works whether the <tt>dimensions</tt> level
+      exists or not. When not, the level ends immediately with no 10-12
+      tags.
+
+      <p>Virtual levels are an option that can simplify tree-traversing
+      code in some cases.  It is a software design choice whether to be
+      explicitly aware of non-existent levels, or have them automatically
+      presented as empty levels.
+
+      <p>In the example above, the tags in the <tt>dimensions</tt>
+      construction were given different numbers from those in the
+      <tt>object</tt> construction only to make them easier to discuss
+      here.  There is no need for the two sets of tags to be unique from
+      each other.  The <tt>dimensions</tt> tags would be 1-3 in typical
+      uses.
+
+      </p></indent>
 
     </p></indent>
 
@@ -1295,11 +1376,12 @@ procedure syn_trav_level_name (        {get the name of the current syntax tree 
 
     <p>The first returns the current nesting level.  0 indicates the top
     level. Each successive higher number indicates one more level down
-    from the top.
+    from the top.  Virtual levels are included in the returned value.
 
     <p>The second routine returns the name of the current level.  This is
     the name of the syntax construction as used in the ".define" command
-    in the syntax definition.
+    in the syntax definition.  Virtual levels have no names.  The empty
+    string is returned if currently in a virtual level.
 
     </p></indent>
 
@@ -1347,8 +1429,8 @@ different syntax, peform these steps:
 
   <p>This defines the existance of the syntax construction TOPLEV, and
   specifies its subroutine will have the name "syn_ch_toplev".  As
-  mentioned before, subroutine names starting with "syn_ch_" are
-  explicitly reserved for application-specific syntax parsing routines.
+  mentioned before, subroutine names starting with "syn_ch_" are reserved
+  for application-specific syntax parsing routines.
 
   <p>The TEST_SYN code that specifies the top level syntax parsing routine
   must be modified accordingly.  The existing section of code is:
@@ -1375,16 +1457,15 @@ var
 
   <p>The SYN syntax parsing routines must always be present in the SYN
   library, so they can not have names "syn_sy_xxx" to avoid colliding with
-  application-specific names.  Names "syn_chsyn_xxx" are specifically
-  reserved for SYN language parsing routines.  This is why
-  <tt>top_syn_p</tt> is set to the address of <tt>syn_chsyn_command</tt>,
-  above.  In the SYN language definition, the top level construction is
-  called COMMAND, and it's parsing routine has the name
-  "syn_chsyn_command".
+  application-specific names.  Names "syn_chsyn_xxx" are reserved for the
+  SYN language parsing routines.  This is why <tt>top_syn_p</tt> is set to
+  the address of <tt>syn_chsyn_command</tt>, above.  In the SYN language
+  definition, the top level construction is called COMMAND, and it's
+  parsing routine has the name "syn_chsyn_command".
 
   <p>In our example, <tt>top_syn_p</tt> must be set to the address of
   <tt>syn_ch_toplev</tt>.  However, symply changing the last line of the
-  source snippet above is unsufficient because the routine SYN_CH_TOPLEV
+  source snippet above is insufficient because the routine SYN_CH_TOPLEV
   is not declared anywhere visible to this source file.  It only exists in
   the code generated from compiling the custom syntax definition.
 
